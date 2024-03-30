@@ -552,18 +552,8 @@ baseSheet =
         ]
     , Class (dot classes.any ++ dot classes.el ++ dot classes.imageContainer)
         [ Prop "display" "block"
-        , Descriptor (dot classes.heightFill)
-            [ Child "img"
-                [ Prop "max-height" "100%"
-                , Prop "object-fit" "cover"
-                ]
-            ]
-        , Descriptor (dot classes.widthFill)
-            [ Child "img"
-                [ Prop "max-width" "100%"
-                , Prop "object-fit" "cover"
-                ]
-            ]
+        , Prop "object-fit" "cover"
+        , Prop "width" "max-content"
         ]
     , Class (dot classes.any ++ ":focus")
         [ Prop "outline" "none"

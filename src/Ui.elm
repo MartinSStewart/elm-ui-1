@@ -523,50 +523,14 @@ image :
         }
     -> Element msg
 image attrs img =
-    -- let
-    --     imageAttributes =
-    --         attrs
-    --             |> List.filter
-    --                 (\a ->
-    --                     case a of
-    --                         Internal.Width _ ->
-    --                             True
-    --                         Internal.Height _ ->
-    --                             True
-    --                         _ ->
-    --                             False
-    --                 )
-    -- in
-    -- Internal.element
-    --     Internal.asEl
-    --     Internal.div
-    --     (Internal.htmlClass classes.imageContainer
-    --         :: attrs
-    --     )
-    --     (Internal.Unkeyed
-    --         [ Internal.element
-    --             Internal.asEl
-    --             (Internal.NodeName "img")
-    -- ([ Internal.Attr <| Attr.src src
-    --  , Internal.Attr <| Attr.alt description
-    --  ]
-    --     ++ imageAttributes
-    --             )
-    --             (Internal.Unkeyed [])
-    --         ]
-    --     )
-    Two.element Two.NodeAsDiv
+    Two.element Two.NodeAsImage
         Two.AsEl
-        (width fill :: Two.class Style.classes.imageContainer :: attrs)
-        [ Two.Element
-            (\s ->
-                Html.img
-                    [ Attr.src img.source
-                    , Attr.alt img.description
-                    ]
-                    []
-            )
-        ]
+        (Two.class Style.classes.imageContainer
+            :: htmlAttribute (Attr.src img.source)
+            :: htmlAttribute (Attr.alt img.description)
+            :: attrs
+        )
+        []
 
 
 {-| -}

@@ -494,6 +494,7 @@ type Node
     | NodeAsNumberedList
     | NodeAsBulletedList
     | NodeAsListItem
+    | NodeAsImage
       -- webcomponents
     | NodeAs String
 
@@ -1108,6 +1109,9 @@ element node layout attrs children =
                     NodeAsTextArea ->
                         Html.textarea styleAttrs finalChildren
 
+                    NodeAsImage ->
+                        Html.img styleAttrs finalChildren
+
                     NodeAsH1 ->
                         Html.h1 styleAttrs finalChildren
 
@@ -1293,6 +1297,9 @@ elementKeyed node layout attrs children =
 
                     NodeAsTextArea ->
                         Html.Keyed.node "textarea" styleAttrs finalChildren
+
+                    NodeAsImage ->
+                        Html.Keyed.node "img" styleAttrs finalChildren
 
                     NodeAsH1 ->
                         Html.Keyed.node "h1" styleAttrs finalChildren
