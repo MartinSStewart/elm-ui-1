@@ -260,6 +260,16 @@ label id attrs labelElement =
     }
 
 
+labelHtmlAttribute : Label -> Html.Attribute a
+labelHtmlAttribute lbl =
+    case lbl of
+        HiddenLabel textLabel ->
+            Html.Attributes.attribute "aria-label" textLabel
+
+        LabelFromId id ->
+            Html.Attributes.id id
+
+
 labelAttribute : Label -> Ui.Attribute a
 labelAttribute lbl =
     case lbl of
@@ -395,15 +405,18 @@ sliderHorizontal attributes input =
             (input.value - input.min)
                 / (input.max - input.min)
     in
-    Ui.row
-        [ Ui.width Ui.fill
-        ]
-        [ Two.element Two.NodeAsInput
-            Two.AsEl
-            [ Two.class (Style.classes.slider ++ " focusable-parent")
-            , labelAttribute input.label
-            , Two.attribute
-                (Html.Events.onInput
+    Ui.el
+        ([ Ui.behindContent
+            (viewThumb factor thumbAttributes)
+         , Ui.height (Ui.px 20)
+         ]
+            ++ attributes
+        )
+        (Ui.html <|
+            Html.input
+                [ labelHtmlAttribute input.label
+                , Html.Attributes.class Style.classes.slider
+                , Html.Events.onInput
                     (\str ->
                         case String.toFloat str of
                             Nothing ->
@@ -414,11 +427,8 @@ sliderHorizontal attributes input =
                             Just val ->
                                 input.onChange val
                     )
-                )
-            , Two.attribute
-                (Html.Attributes.type_ "range")
-            , Two.attribute <|
-                Html.Attributes.step
+                , Html.Attributes.type_ "range"
+                , Html.Attributes.step
                     (case input.step of
                         Nothing ->
                             -- Note: If we set `any` here,
@@ -432,27 +442,14 @@ sliderHorizontal attributes input =
                         Just step ->
                             String.fromFloat step
                     )
-            , Two.attribute
-                (Html.Attributes.min (String.fromFloat input.min))
-            , Two.attribute
-                (Html.Attributes.max (String.fromFloat input.max))
-            , Two.attribute <|
-                Html.Attributes.value (String.fromFloat input.value)
-            , Ui.width Ui.fill
-            , Ui.height Ui.fill
-            ]
-            []
-        , Ui.el
-            (Ui.width Ui.fill
-                :: Ui.height (Ui.px 20)
-                :: attributes
-                -- This is after `attributes` because the thumb should be in front of everything.
-                ++ [ Ui.behindContent
-                        (viewThumb factor thumbAttributes)
-                   ]
-            )
-            Ui.none
-        ]
+                , Html.Attributes.min (String.fromFloat input.min)
+                , Html.Attributes.max (String.fromFloat input.max)
+                , Html.Attributes.value (String.fromFloat input.value)
+                , Html.Attributes.style "height" "100%"
+                , Html.Attributes.style "width" "100%"
+                ]
+                []
+        )
 
 
 {-| -}
@@ -468,13 +465,8 @@ sliderVertical :
         , step : Maybe Float
         }
     -> Element msg
-sliderVertical attrs input =
+sliderVertical attributes input =
     let
-        attributes =
-            Ui.height (Ui.px 200)
-                :: Ui.width (Ui.px 20)
-                :: attrs
-
         (Thumb thumbAttributes) =
             Maybe.withDefault defaultThumb input.thumb
 
@@ -482,17 +474,24 @@ sliderVertical attrs input =
             (input.value - input.min)
                 / (input.max - input.min)
     in
-    Ui.row
-        [ Ui.width Ui.fill
-        ]
-        [ Two.element Two.NodeAsInput
-            Two.AsEl
-            [ Two.class (Style.classes.slider ++ " focusable-parent")
-            , labelAttribute input.label
-            , Two.attribute <|
-                Html.Attributes.attribute "orient" "vertical"
-            , Two.attribute
-                (Html.Events.onInput
+    Ui.el
+        ([ Ui.behindContent
+            (viewVerticalThumb factor thumbAttributes)
+         , Ui.width (Ui.px 20)
+         , Ui.height Ui.fill
+         ]
+            ++ attributes
+        )
+        (Ui.html <|
+            Html.input
+                [ labelHtmlAttribute input.label
+                , Html.Attributes.class Style.classes.slider
+                , Html.Attributes.attribute "orient" "vertical"
+                , Html.Attributes.attribute "writing-mode" "bt-lr"
+                , Html.Attributes.style "appearance" "slider-vertical"
+                , Html.Attributes.style "height" "100%"
+                , Html.Attributes.style "width" "100%"
+                , Html.Events.onInput
                     (\str ->
                         case String.toFloat str of
                             Nothing ->
@@ -503,11 +502,8 @@ sliderVertical attrs input =
                             Just val ->
                                 input.onChange val
                     )
-                )
-            , Two.attribute
-                (Html.Attributes.type_ "range")
-            , Two.attribute <|
-                Html.Attributes.step
+                , Html.Attributes.type_ "range"
+                , Html.Attributes.step
                     (case input.step of
                         Nothing ->
                             -- Note: If we set `any` here,
@@ -521,27 +517,12 @@ sliderVertical attrs input =
                         Just step ->
                             String.fromFloat step
                     )
-            , Two.attribute
-                (Html.Attributes.min (String.fromFloat input.min))
-            , Two.attribute
-                (Html.Attributes.max (String.fromFloat input.max))
-            , Two.attribute <|
-                Html.Attributes.value (String.fromFloat input.value)
-            , Ui.width Ui.fill
-            , Ui.height Ui.fill
-            ]
-            []
-        , Ui.el
-            (Ui.height Ui.fill
-                :: Ui.width (Ui.px 20)
-                :: attributes
-                -- This is after `attributes` because the thumb should be in front of everything.
-                ++ [ Ui.behindContent
-                        (viewVerticalThumb factor thumbAttributes)
-                   ]
-            )
-            Ui.none
-        ]
+                , Html.Attributes.min (String.fromFloat input.min)
+                , Html.Attributes.max (String.fromFloat input.max)
+                , Html.Attributes.value (String.fromFloat input.value)
+                ]
+                []
+        )
 
 
 viewThumb factor thumbAttributes =
@@ -549,6 +530,7 @@ viewThumb factor thumbAttributes =
         [ Ui.width Ui.fill
         , Ui.height Ui.fill
         , Ui.centerY
+        , Two.attribute (Html.Attributes.style "pointer-events" "none")
         ]
         [ Ui.el
             [ Two.style
@@ -576,6 +558,7 @@ viewVerticalThumb factor thumbAttributes =
         [ Ui.width Ui.fill
         , Ui.height Ui.fill
         , Ui.centerX
+        , Two.attribute (Html.Attributes.style "pointer-events" "none")
         ]
         [ Ui.el
             [ Two.style

@@ -288,35 +288,30 @@ input[type="search"]::-webkit-search-results-decoration {
 
 
 sliderReset =
-    """input[type=range] {
+    """
+input[type=range].sldr {
     -webkit-appearance: none;
     background: transparent;
-    position:absolute;
-    left:0;
-    top:0;
-    z-index:10;
-    width: 100%;
-    height: 100%;
     opacity: 0;
 }
-    """
+            """
 
 
 trackReset =
     """
-input[type=range]::-moz-range-track {
+input[type=range].sldr::-moz-range-track {
     background: transparent;
     cursor: pointer;
 }
-input[type=range]::-ms-track {
+input[type=range].sldr::-ms-track {
     background: transparent;
     cursor: pointer;
 }
-input[type=range]::-webkit-slider-runnable-track {
+input[type=range].sldr::-webkit-slider-runnable-track {
     background: transparent;
     cursor: pointer;
 }
-    """
+            """
 
 
 thumbReset =
@@ -1608,7 +1603,13 @@ slider =
             , Prop "height" "16px"
             ]
     in
-    [ Class ("input[type=\"range\"]." ++ classes.slider ++ "::-moz-range-thumb")
+    [ Class (dot classes.slider)
+        [ Prop "flex" "none"
+        , Prop "flex-direction" "unset"
+        , Prop "padding" "0"
+        , Prop "margin" "0"
+        ]
+    , Class ("input[type=\"range\"]." ++ classes.slider ++ "::-moz-range-thumb")
         props
     , Class ("input[type=\"range\"]." ++ classes.slider ++ "::-webkit-slider-thumb")
         props
