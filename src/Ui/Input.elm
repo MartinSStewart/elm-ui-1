@@ -508,59 +508,7 @@ sliderHorizontal :
         }
     -> Element msg
 sliderHorizontal attributes input =
-    let
-        realThumb =
-            Maybe.withDefault defaultThumb input.thumb
-
-        factor =
-            (input.value - input.min)
-                / (input.max - input.min)
-    in
-    Ui.el
-        ([ Ui.behindContent
-            (viewThumb factor realThumb Horizontal)
-         , Ui.height (Ui.px 20)
-         ]
-            ++ attributes
-        )
-        (Ui.html <|
-            Html.input
-                [ labelHtmlAttribute input.label
-                , Html.Attributes.class Style.classes.slider
-                , Html.Events.onInput
-                    (\str ->
-                        case String.toFloat str of
-                            Nothing ->
-                                -- This should never happen because the browser
-                                -- should always provide a Float.
-                                input.onChange 0
-
-                            Just val ->
-                                input.onChange val
-                    )
-                , Html.Attributes.type_ "range"
-                , Html.Attributes.step
-                    (case input.step of
-                        Nothing ->
-                            -- Note: If we set `any` here,
-                            -- Firefox makes a single press of the arrows keys equal to 1
-                            -- We could set the step manually to the effective range / 100
-                            -- String.fromFloat ((input.max - input.min) / 100)
-                            -- Which matches Chrome's default behavior
-                            -- HOWEVER, that means manually moving a slider with the mouse will snap to that interval.
-                            "any"
-
-                        Just step ->
-                            String.fromFloat step
-                    )
-                , Html.Attributes.min (String.fromFloat input.min)
-                , Html.Attributes.max (String.fromFloat input.max)
-                , Html.Attributes.value (String.fromFloat input.value)
-                , Html.Attributes.style "height" "100%"
-                , Html.Attributes.style "width" "100%"
-                ]
-                []
-        )
+    viewSlider attributes input Horizontal
 
 
 {-| -}
@@ -577,9 +525,34 @@ sliderVertical :
         }
     -> Element msg
 sliderVertical attributes input =
+    viewSlider attributes input Vertical
+
+
+viewSlider :
+    List (Ui.Attribute msg)
+    ->
+        { label : Label
+        , onChange : Float -> msg
+        , min : Float
+        , max : Float
+        , value : Float
+        , thumb : Maybe (Thumb msg)
+        , step : Maybe Float
+        }
+    -> Direction
+    -> Element msg
+viewSlider attributes input direction =
     let
         realThumb =
             Maybe.withDefault defaultThumb input.thumb
+
+        isVertical =
+            case direction of
+                Horizontal ->
+                    False
+
+                Vertical ->
+                    True
 
         factor =
             (input.value - input.min)
@@ -587,9 +560,19 @@ sliderVertical attributes input =
     in
     Ui.el
         ([ Ui.behindContent
-            (viewThumb factor realThumb Vertical)
-         , Ui.width (Ui.px 20)
-         , Ui.height Ui.fill
+            (viewThumb factor realThumb direction)
+         , case direction of
+            Horizontal ->
+                Ui.width Ui.fill
+
+            Vertical ->
+                Ui.width (Ui.px 20)
+         , case direction of
+            Horizontal ->
+                Ui.height (Ui.px 20)
+
+            Vertical ->
+                Ui.height Ui.fill
          ]
             ++ attributes
         )
@@ -597,9 +580,9 @@ sliderVertical attributes input =
             Html.input
                 [ labelHtmlAttribute input.label
                 , Html.Attributes.class Style.classes.slider
-                , Html.Attributes.attribute "orient" "vertical"
-                , Html.Attributes.attribute "writing-mode" "bt-lr"
-                , Html.Attributes.style "appearance" "slider-vertical"
+                , attrIf isVertical (Html.Attributes.attribute "orient" "vertical")
+                , attrIf isVertical (Html.Attributes.attribute "writing-mode" "bt-lr")
+                , attrIf isVertical (Html.Attributes.style "appearance" "slider-vertical")
                 , Html.Attributes.style "height" "100%"
                 , Html.Attributes.style "width" "100%"
                 , Html.Events.onInput
@@ -634,6 +617,15 @@ sliderVertical attributes input =
                 ]
                 []
         )
+
+
+attrIf : Bool -> Html.Attribute a -> Html.Attribute a
+attrIf condition attr =
+    if condition then
+        attr
+
+    else
+        Html.Attributes.class ""
 
 
 viewThumb : Float -> Thumb msg -> Direction -> Element msg
