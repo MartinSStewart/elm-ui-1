@@ -3,7 +3,7 @@ module Ui.Input exposing
     , checkbox
     , text, multiline
     , username, newPassword, currentPassword, email, search, spellChecked
-    , sliderHorizontal, sliderVertical, Thumb, thumb
+    , sliderHorizontal, sliderVertical, Thumb, thumb, thumbWith
     , chooseOne, Option, option, optionWith, OptionState(..)
     )
 
@@ -75,7 +75,7 @@ A slider is great for choosing between a range of numerical values.
   - **thumb** - The icon that you click and drag to change the value.
   - **track** - The line behind the thumb denoting where you can slide to.
 
-@docs sliderHorizontal, sliderVertical, Thumb, thumb
+@docs sliderHorizontal, sliderVertical, Thumb, thumb, thumbWith
 
 
 # Choose One or a 'Radio' Selection
@@ -177,9 +177,14 @@ import Ui.Font
 import Ui.Shadow
 
 
-white2 : Ui.Color
-white2 =
+white : Ui.Color
+white =
     Ui.rgb 255 255 255
+
+
+blue : Ui.Color
+blue =
+    Ui.rgb 59 153 252
 
 
 darkGrey2 : Ui.Color
@@ -187,8 +192,8 @@ darkGrey2 =
     Ui.rgb 186 189 182
 
 
-charcoal2 : Ui.Color
-charcoal2 =
+charcoal : Ui.Color
+charcoal =
     Ui.rgb
         136
         138
@@ -361,26 +366,132 @@ checkbox attrs options =
 
 {-| -}
 type Thumb msg
-    = Thumb (List (Attribute msg))
+    = Thumb
+        (Direction
+         ->
+            { thumb : List (Attribute msg)
+            , below : List (Attribute msg)
+            , above : List (Attribute msg)
+            }
+        )
 
 
 {-| -}
 thumb : List (Attribute msg) -> Thumb msg
-thumb =
+thumb attrs =
     Thumb
+        (\_ ->
+            { thumb = attrs
+            , below = []
+            , above = []
+            }
+        )
+
+
+{-| You can specify the style of the thumb and also the track that the thumb slides on.
+
+    - `lowerTrack` - Is the part of the track that is on the left or below the thumb.  This one is commonly highlighted with a special color.
+    - `higherTrack` - Is the part of the track that is on the right or above the thumb.  This
+
+-}
+thumbWith :
+    { thumb : List (Attribute msg)
+    , lowerTrack : List (Attribute msg)
+    , higherTrack : List (Attribute msg)
+    }
+    -> Thumb msg
+thumbWith details =
+    Thumb
+        (\_ ->
+            { thumb = details.thumb
+            , below = details.lowerTrack
+            , above = details.higherTrack
+            }
+        )
 
 
 {-| -}
 defaultThumb : Thumb msg
 defaultThumb =
     Thumb
-        [ Ui.width (Ui.px 16)
-        , Ui.height (Ui.px 16)
-        , Ui.rounded 8
-        , Ui.border 1
-        , Ui.borderColor (Ui.rgb 100 100 100)
-        , Ui.background (Ui.rgb 255 255 255)
-        ]
+        (\direction ->
+            { thumb =
+                [ Ui.width (Ui.px 16)
+                , Ui.height (Ui.px 16)
+                , Ui.rounded 8
+                , Ui.border 1
+                , Ui.borderColor charcoal
+                , Ui.background white
+                ]
+            , above =
+                case direction of
+                    Horizontal ->
+                        [ Ui.height (Ui.px 8)
+                        , Ui.roundedWith
+                            { topLeft = 0
+                            , topRight = 8
+                            , bottomLeft = 0
+                            , bottomRight = 8
+                            }
+                        , Ui.border 1
+                        , Ui.borderColor charcoal
+                        , Ui.background white
+                        , Ui.widthMin 8
+                        ]
+
+                    Vertical ->
+                        [ Ui.width (Ui.px 8)
+                        , Ui.height Ui.fill
+                        , Ui.roundedWith
+                            { topLeft = 8
+                            , topRight = 8
+                            , bottomLeft = 0
+                            , bottomRight = 0
+                            }
+                        , Ui.border 1
+                        , Ui.centerX
+                        , Ui.borderColor charcoal
+                        , Ui.background white
+                        , Ui.heightMin 8
+                        ]
+            , below =
+                case direction of
+                    Horizontal ->
+                        [ Ui.height (Ui.px 8)
+                        , Ui.roundedWith
+                            { topLeft = 8
+                            , topRight = 0
+                            , bottomLeft = 8
+                            , bottomRight = 0
+                            }
+                        , Ui.border 1
+                        , Ui.borderColor charcoal
+                        , Ui.background blue
+                        , Ui.widthMin 8
+                        ]
+
+                    Vertical ->
+                        [ Ui.height Ui.fill
+                        , Ui.width (Ui.px 8)
+                        , Ui.centerX
+                        , Ui.roundedWith
+                            { topLeft = 0
+                            , topRight = 0
+                            , bottomLeft = 8
+                            , bottomRight = 8
+                            }
+                        , Ui.border 1
+                        , Ui.borderColor (Ui.rgb 100 100 100)
+                        , Ui.background blue
+                        , Ui.heightMin 8
+                        ]
+            }
+        )
+
+
+type Direction
+    = Horizontal
+    | Vertical
 
 
 {-| -}
@@ -398,7 +509,7 @@ sliderHorizontal :
     -> Element msg
 sliderHorizontal attributes input =
     let
-        (Thumb thumbAttributes) =
+        realThumb =
             Maybe.withDefault defaultThumb input.thumb
 
         factor =
@@ -407,7 +518,7 @@ sliderHorizontal attributes input =
     in
     Ui.el
         ([ Ui.behindContent
-            (viewThumb factor thumbAttributes)
+            (viewThumb factor realThumb Horizontal)
          , Ui.height (Ui.px 20)
          ]
             ++ attributes
@@ -467,7 +578,7 @@ sliderVertical :
     -> Element msg
 sliderVertical attributes input =
     let
-        (Thumb thumbAttributes) =
+        realThumb =
             Maybe.withDefault defaultThumb input.thumb
 
         factor =
@@ -476,7 +587,7 @@ sliderVertical attributes input =
     in
     Ui.el
         ([ Ui.behindContent
-            (viewVerticalThumb factor thumbAttributes)
+            (viewThumb factor realThumb Vertical)
          , Ui.width (Ui.px 20)
          , Ui.height Ui.fill
          ]
@@ -525,58 +636,85 @@ sliderVertical attributes input =
         )
 
 
-viewThumb factor thumbAttributes =
-    Ui.row
+viewThumb : Float -> Thumb msg -> Direction -> Element msg
+viewThumb factor (Thumb toThumbAttrs) direction =
+    let
+        thumbAttributes =
+            toThumbAttrs direction
+
+        layout =
+            case direction of
+                Horizontal ->
+                    Ui.row
+
+                Vertical ->
+                    Ui.column
+
+        alignment =
+            case direction of
+                Horizontal ->
+                    Ui.centerY
+
+                Vertical ->
+                    Ui.centerX
+
+        below =
+            Ui.el
+                (Two.style
+                    "flex-grow"
+                    (String.fromInt (round (factor * 5000)))
+                    :: thumbAttributes.below
+                )
+                Ui.none
+
+        above =
+            Ui.el
+                (Two.style
+                    "flex-grow"
+                    (String.fromInt (round ((1 - factor) * 5000)))
+                    :: thumbAttributes.above
+                )
+                Ui.none
+    in
+    layout
         [ Ui.width Ui.fill
         , Ui.height Ui.fill
-        , Ui.centerY
+        , alignment
         , Two.attribute (Html.Attributes.style "pointer-events" "none")
         ]
-        [ Ui.el
-            [ Two.style
-                "flex-grow"
-                (String.fromInt (round (factor * 5000)))
-            ]
-            Ui.none
-        , Ui.el
-            (Ui.centerY
-                :: thumbAttributes
-            )
-            Ui.none
-        , Ui.el
-            [ Two.style
-                "flex-grow"
-                (String.fromInt (round ((1 - factor) * 5000)))
-            ]
-            Ui.none
-        ]
+        [ case direction of
+            Horizontal ->
+                below
 
+            Vertical ->
+                above
+        , Ui.el
+            [ alignment
+            , case direction of
+                Horizontal ->
+                    Ui.width (Ui.px 0)
 
-viewVerticalThumb : Float -> List (Attribute msg) -> Element msg
-viewVerticalThumb factor thumbAttributes =
-    Ui.column
-        [ Ui.width Ui.fill
-        , Ui.height Ui.fill
-        , Ui.centerX
-        , Two.attribute (Html.Attributes.style "pointer-events" "none")
-        ]
-        [ Ui.el
-            [ Two.style
-                "flex-grow"
-                (String.fromInt (round ((1 - factor) * 5000)))
+                Vertical ->
+                    Ui.height (Ui.px 0)
+            , Ui.inFront
+                (Ui.el
+                    [ Ui.contentCenterY
+                    , Ui.contentCenterX
+                    , Ui.width (Ui.px 0)
+                    , Ui.height (Ui.px 0)
+                    ]
+                    (Ui.el thumbAttributes.thumb
+                        Ui.none
+                    )
+                )
             ]
             Ui.none
-        , Ui.el
-            (Ui.centerX
-                :: thumbAttributes
-            )
-            Ui.none
-        , Ui.el
-            [ Two.style
-                "flex-grow"
-                (String.fromInt (round (factor * 5000)))
-            ]
-            Ui.none
+        , case direction of
+            Horizontal ->
+                above
+
+            Vertical ->
+                below
         ]
 
 
@@ -1078,7 +1216,7 @@ defaultRadioOption optionLabel status =
         [ Ui.el
             [ Ui.width (Ui.px 14)
             , Ui.height (Ui.px 14)
-            , Ui.background white2
+            , Ui.background white
             , Ui.rounded 7
             , case status of
                 Selected ->
@@ -1252,7 +1390,7 @@ defaultTextBoxStyle2 =
     , Ui.rounded 3
     , Ui.borderColor darkGrey2
     , Ui.border 1
-    , Ui.background white2
+    , Ui.background white
     , Ui.spacing 5
     , Ui.width Ui.fill
 
@@ -1270,7 +1408,7 @@ defaultCheckbox checked =
     Ui.el
         [ Ui.width (Ui.px 14)
         , Ui.height (Ui.px 14)
-        , Ui.Font.color white2
+        , Ui.Font.color white
         , Ui.Font.size 9
         , Ui.Font.center
         , Ui.centerY
@@ -1302,10 +1440,10 @@ defaultCheckbox checked =
                 ]
         , Ui.background <|
             if checked then
-                Ui.rgb 59 153 252
+                blue
 
             else
-                white2
+                white
         ]
         (if checked then
             Ui.el
@@ -1315,7 +1453,7 @@ defaultCheckbox checked =
                     , bottom = 2
                     , right = 0
                     }
-                , Ui.borderColor white2
+                , Ui.borderColor white
                 , Ui.height (Ui.px 6)
                 , Ui.width (Ui.px 9)
                 , Ui.rotate (Ui.turns (1 - 0.125))

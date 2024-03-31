@@ -301,15 +301,12 @@ trackReset =
     """
 input[type=range].sldr::-moz-range-track {
     background: transparent;
-    cursor: pointer;
 }
 input[type=range].sldr::-ms-track {
     background: transparent;
-    cursor: pointer;
 }
 input[type=range].sldr::-webkit-slider-runnable-track {
     background: transparent;
-    cursor: pointer;
 }
             """
 
@@ -708,6 +705,9 @@ baseSheet =
         , Prop "min-height" "min-content"
         , Prop "display" "flex"
         , Prop "flex-direction" "column"
+        , Descriptor (dot classes.widthExact)
+            [ Prop "flex-shrink" "0"
+            ]
         ]
     , Class "button"
         -- Button reset
@@ -1005,6 +1005,9 @@ baseSheet =
             [ Prop "display" "flex"
             , Prop "flex-direction" "column"
             , Prop "align-content" "flex-start"
+            , Descriptor (dot classes.widthExact)
+                [ Prop "flex-shrink" "0"
+                ]
             , Child (dot classes.any)
                 [ Prop "min-height" "min-content"
                 , Descriptor (dot classes.heightExact)
@@ -1477,11 +1480,7 @@ elDescription =
                     )
 
                 CenterY ->
-                    ( [ -- Prop "justify-content" "center"
-                        Child (dot classes.any)
-                            [ Prop "margin-top" "auto"
-                            , Prop "margin-bottom" "auto"
-                            ]
+                    ( [ Prop "justify-content" "center"
                       ]
                     , [ Prop "margin-top" "auto !important"
                       , Prop "margin-bottom" "auto !important"
