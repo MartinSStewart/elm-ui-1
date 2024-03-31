@@ -310,7 +310,9 @@ viewWithState attrs config state data =
             :: Two.attrIf config.scrollable
                 (Two.classWith Flag.overflow Style.classes.scrollbars)
             :: Two.style "grid-template-columns"
-                (gridTemplate state config.columns "")
+                (gridTemplateColumns state config.columns "")
+            :: Two.style "grid-auto-rows"
+                "minmax(min-content, max-content)"
             :: Ui.width Ui.fill
             :: attrs
         )
@@ -334,18 +336,18 @@ hasSummary (Column col) =
             True
 
 
-gridTemplate : state -> List (Column state data msg) -> String -> String
-gridTemplate state cols str =
+gridTemplateColumns : state -> List (Column state data msg) -> String -> String
+gridTemplateColumns state cols str =
     case cols of
         [] ->
             str
 
         (Column col) :: remain ->
             if not (col.visible state) then
-                gridTemplate state remain str
+                gridTemplateColumns state remain str
 
             else
-                gridTemplate state remain (str ++ " " ++ columnToGridTemplate col)
+                gridTemplateColumns state remain (str ++ " " ++ columnToGridTemplate col)
 
 
 columnToGridTemplate : ColumnDetails state data msg -> String
