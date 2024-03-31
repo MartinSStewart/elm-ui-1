@@ -586,7 +586,7 @@ renderSummaryColumn config state rows isFirstColumn (Column col) =
             default.padding
     in
     Two.element Two.NodeAsTableD
-        Two.AsRow
+        Two.AsEl
         (padding
             :: Two.attrIf
                 config.stickHeader
