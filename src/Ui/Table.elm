@@ -129,19 +129,22 @@ withScrollable input cfg =
 
 {-| -}
 type Column state data msg
-    = Column
-        { header : state -> Cell msg
-        , width :
-            Maybe
-                { fill : Bool
-                , min : Maybe Int
-                , max : Maybe Int
-                }
-        , view : Int -> state -> data -> Cell msg
-        , visible : state -> Bool
-        , order : state -> Int
-        , summary : Maybe (state -> List data -> Cell msg)
-        }
+    = Column (ColumnDetails state data msg)
+
+
+type alias ColumnDetails state data msg =
+    { header : state -> Cell msg
+    , width :
+        Maybe
+            { fill : Bool
+            , min : Maybe Int
+            , max : Maybe Int
+            }
+    , view : Int -> state -> data -> Cell msg
+    , visible : state -> Bool
+    , order : state -> Int
+    , summary : Maybe (state -> List data -> Cell msg)
+    }
 
 
 {-| -}
@@ -342,71 +345,56 @@ gridTemplate state cols str =
                 gridTemplate state remain str
 
             else
-                case col.width of
-                    Nothing ->
-                        gridTemplate state remain (str ++ " minmax(min-content, max-content)")
+                gridTemplate state remain (str ++ " " ++ columnToGridTemplate col)
 
-                    Just w ->
-                        case w.min of
-                            Nothing ->
-                                case w.max of
-                                    Nothing ->
-                                        if w.fill then
-                                            gridTemplate state remain (str ++ " 1fr")
 
-                                        else
-                                            gridTemplate state remain (str ++ " minmax(min-content, max-content)")
+columnToGridTemplate : ColumnDetails state data msg -> String
+columnToGridTemplate col =
+    case col.width of
+        Nothing ->
+            "minmax(min-content, max-content)"
 
-                                    Just max ->
-                                        if w.fill then
-                                            gridTemplate state
-                                                remain
-                                                (str
-                                                    ++ " minmax(1fr, "
-                                                    ++ String.fromInt max
-                                                    ++ "px)"
-                                                )
+        Just w ->
+            case w.min of
+                Nothing ->
+                    case w.max of
+                        Nothing ->
+                            if w.fill then
+                                "1fr"
 
-                                        else
-                                            gridTemplate state
-                                                remain
-                                                (str
-                                                    ++ " minmax(min-content, "
-                                                    ++ String.fromInt max
-                                                    ++ "px)"
-                                                )
+                            else
+                                "minmax(min-content, max-content)"
 
-                            Just min ->
-                                case w.max of
-                                    Nothing ->
-                                        if w.fill then
-                                            gridTemplate state
-                                                remain
-                                                (str
-                                                    ++ " minmax("
-                                                    ++ String.fromInt min
-                                                    ++ "px , 1fr)"
-                                                )
+                        Just max ->
+                            if w.fill then
+                                "minmax(1fr, "
+                                    ++ String.fromInt max
+                                    ++ "px)"
 
-                                        else
-                                            gridTemplate state
-                                                remain
-                                                (str
-                                                    ++ " minmax("
-                                                    ++ String.fromInt min
-                                                    ++ "px , max-content)"
-                                                )
+                            else
+                                "minmax(min-content, "
+                                    ++ String.fromInt max
+                                    ++ "px)"
 
-                                    Just max ->
-                                        gridTemplate state
-                                            remain
-                                            (str
-                                                ++ " minmax("
-                                                ++ String.fromInt min
-                                                ++ "px , "
-                                                ++ String.fromInt max
-                                                ++ ")"
-                                            )
+                Just min ->
+                    case w.max of
+                        Nothing ->
+                            if w.fill then
+                                "minmax("
+                                    ++ String.fromInt min
+                                    ++ "px , 1fr)"
+
+                            else
+                                "minmax("
+                                    ++ String.fromInt min
+                                    ++ "px , max-content)"
+
+                        Just max ->
+                            "minmax("
+                                ++ String.fromInt min
+                                ++ "px , "
+                                ++ String.fromInt max
+                                ++ ")"
 
 
 renderHeader : state -> Config state data msg -> Element msg
