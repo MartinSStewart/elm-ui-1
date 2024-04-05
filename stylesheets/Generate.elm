@@ -583,6 +583,11 @@ baseSheet =
         ]
     , Class (dot classes.hasNearby)
         [ Prop "position" "relative"
+        , Child (dot classes.any)
+            -- **NOTE** RELATIVE
+            -- This is to avoid awkward stacking contexts
+            [ Prop "position" "relative"
+            ]
         ]
     , Class "li"
         [ Descriptor (dot classes.any)
@@ -717,6 +722,9 @@ baseSheet =
             ]
         ]
     , Class (dot classes.any)
+        -- **NOTE** RELATIVE
+        -- This should only apply to visible elements, not nearby elements
+        -- see RELATIVE comment
         [ Prop "border" "none"
         , Prop "flex-shrink" "1"
         , Prop "flex-basis" "auto"
