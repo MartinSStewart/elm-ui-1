@@ -21,7 +21,7 @@ module Ui exposing
     , scale
     , scrollable, clipped, clipWithEllipsis
     , link, linkNewTab, download, downloadAs
-    , image
+    , image, imageWithFallback
     , Color, rgb, rgba, palette
     , above, below, onRight, onLeft, inFront, behindContent
     , map, mapAttribute
@@ -98,15 +98,16 @@ Here's what we can expect:
 
 Alignment can be used to align an `Element` within another `Element`.
 
-    Ui.el [ centerX, alignTop ] (text "I'm centered and aligned top!")
+    Ui.el [ Ui.centerX, Ui.alignTop ]
+        (Ui.text "I'm centered and aligned top!")
 
 If alignment is set on elements in a layout such as a `row`, then the element will push the other elements in that direction. Here's an example.
 
     Ui.row []
         [ Ui.el [] Ui.none
-        , Ui.el [ alignLeft ] Ui.none
-        , Ui.el [ centerX ] Ui.none
-        , Ui.el [ alignRight ] Ui.none
+        , Ui.el [ Ui.alignLeft ] Ui.none
+        , Ui.el [ Ui.centerX ] Ui.none
+        , Ui.el [ Ui.alignRight ] Ui.none
         ]
 
 will result in a layout like
@@ -172,7 +173,7 @@ Essentially a `scrollable` is the window that you're looking through. If the con
 
 # Images
 
-@docs image
+@docs image, imageWithFallback
 
 
 # Color
@@ -514,6 +515,11 @@ Leaving the description blank will cause the image to be ignored by assistive te
 
 So, take a moment to describe your image as you would to someone who has a harder time seeing.
 
+    Ui.image []
+        { source = "https://example.com/image.jpg"
+        , description = "A picture of my cat looking goofy."
+        }
+
 -}
 image :
     List (Attribute msg)
@@ -531,6 +537,50 @@ image attrs img =
             :: attrs
         )
         []
+
+
+url : String -> String
+url src =
+    "url(\"" ++ src ++ "\")"
+
+
+{-| For images that you don't control, it can be useful to wire it up in a way so you don't get the "image missing" icon if it fails to load.
+
+This is really common for user portraits.
+
+**Note** You'll likely need to set the height and width of the element
+
+    Ui.imageWithFallback
+        [ width (Ui.px 200)
+        , height (Ui.px 200)
+        ]
+        { source = "https://example.com/image.jpg"
+        , fallback = Ui.text "Image failed to load"
+        }
+
+-}
+imageWithFallback :
+    List (Attribute msg)
+    ->
+        { source : String
+        , fallback : Element msg
+        }
+    -> Element msg
+imageWithFallback attrs img =
+    el
+        (inFront
+            (el
+                [ htmlAttribute (Attr.style "background-image" (url img.source))
+                , htmlAttribute (Attr.style "background-size" "cover")
+                , htmlAttribute (Attr.style "pointer-events" "none")
+                , height fill
+                , width fill
+                ]
+                none
+            )
+            :: attrs
+        )
+        img.fallback
 
 
 {-| -}
@@ -624,7 +674,10 @@ roundedWith options =
 {-| -}
 circle : Attribute msg
 circle =
-    Two.style "border-radius" "50%"
+    Two.style2 "border-radius"
+        "50%"
+        "aspect-ratio"
+        "1 / 1"
 
 
 {-| -}
@@ -679,10 +732,10 @@ linkNewTab uri =
 {-| A link to download a file.
 -}
 download : String -> Attribute msg
-download url =
+download uri =
     Two.link
         { newTab = False
-        , url = url
+        , url = uri
         , download = Just ""
         }
 
@@ -1143,7 +1196,7 @@ spacing x =
 
 {-| In the majority of cases you'll just need to use `spacing`, which will work as intended.
 
-However for some layouts, like `textColumn`, you may want to set a different spacing for the x axis compared to the y axis.
+However for some layouts, like `Ui.Prose.column`, you may want to set a different spacing for the x axis compared to the y axis.
 
 -}
 spacingWith : { horizontal : Int, vertical : Int } -> Attribute msg
