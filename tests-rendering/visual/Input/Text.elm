@@ -45,17 +45,20 @@ view model =
             , Ui.height Ui.fill
             , Ui.paddingXY 0 100
             , Ui.spacing 100
+
+            -- , Ui.background (Ui.rgba 255 0 255 1)
             ]
             [ Theme.h1 "Text"
-            , Ui.Input.multiline
-                [ Ui.border 5
+            , Ui.Input.text
+                [ Ui.border 2
                 , Ui.borderColor (Ui.rgba 0 0 0 1)
                 , Ui.rounded 10
-                , Ui.height Ui.fill
+
+                -- , Ui.height Ui.fill
+                , Ui.background (Ui.rgba 255 0 255 1)
                 ]
                 { onChange = TextUpdated
                 , text = model.text
-                , spellcheck = False
                 , placeholder = Just "Type something here..."
                 , label =
                     Ui.Input.labelHidden "Type something here..."

@@ -38,6 +38,7 @@ main =
             , Ui.column [ Ui.spacing 20, Ui.wrap, Ui.heightMax 600 ]
                 (List.repeat 100 smallBox)
             , centered
+            , nearby
             ]
         )
 
@@ -207,3 +208,98 @@ centered =
             ]
             Ui.none
         ]
+
+
+nearby =
+    Ui.column [ Ui.spacing 20 ]
+        [ Ui.text "Behind content"
+        , Ui.el
+            [ Ui.behindContent (Ui.text "test") ]
+            (Ui.el
+                [ Ui.background (Ui.rgb 100 255 255)
+                , Ui.height (Ui.px 20)
+                ]
+                Ui.none
+            )
+        , Ui.el
+            [ Ui.behindContent (Ui.text "test")
+            , Ui.background (Ui.rgb 100 255 255)
+            ]
+            (Ui.el
+                [ Ui.height (Ui.px 20)
+                ]
+                Ui.none
+            )
+        , Ui.row [ Ui.spacing 20 ]
+            [ box
+                [ Ui.onRight
+                    (tinybox [])
+                , Ui.onRight
+                    (tinybox [ Ui.centerY ])
+                , Ui.onRight
+                    (tinybox [ Ui.alignBottom ])
+                , Ui.onLeft
+                    (tinybox [])
+                , Ui.onLeft
+                    (tinybox [ Ui.centerY ])
+                , Ui.onLeft
+                    (tinybox [ Ui.alignBottom ])
+                , Ui.below
+                    (tinybox [])
+                , Ui.below
+                    (tinybox [ Ui.centerX ])
+                , Ui.below
+                    (tinybox [ Ui.alignRight ])
+                , Ui.above
+                    (tinybox [])
+                , Ui.above
+                    (tinybox [ Ui.centerX ])
+                , Ui.above
+                    (tinybox [ Ui.alignRight ])
+                , Ui.inFront
+                    (tinybox [])
+                , Ui.inFront
+                    (tinybox [ Ui.centerX ])
+                , Ui.inFront
+                    (tinybox [ Ui.alignRight ])
+                , Ui.inFront
+                    (tinybox [ Ui.centerY ])
+                , Ui.inFront
+                    (tinybox [ Ui.centerX, Ui.centerY ])
+                , Ui.inFront
+                    (tinybox [ Ui.alignRight, Ui.centerY ])
+                , Ui.inFront
+                    (tinybox [ Ui.alignBottom ])
+                , Ui.inFront
+                    (tinybox [ Ui.centerX, Ui.alignBottom ])
+                , Ui.inFront
+                    (tinybox [ Ui.alignRight, Ui.alignBottom ])
+                ]
+            ]
+        ]
+
+
+box attrs =
+    Ui.el
+        ([ Ui.width (Ui.px 200)
+         , Ui.height (Ui.px 200)
+
+         -- , Ui.padding 25
+         -- , Theme.rulerRight 200
+         -- , Theme.rulerTop 200
+         , Ui.background Theme.black
+         ]
+            ++ attrs
+        )
+        Ui.none
+
+
+tinybox attrs =
+    Ui.el
+        ([ Ui.width (Ui.px 20)
+         , Ui.height (Ui.px 20)
+         , Theme.palette.pink
+         ]
+            ++ attrs
+        )
+        Ui.none

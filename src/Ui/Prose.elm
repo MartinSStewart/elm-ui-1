@@ -1,5 +1,5 @@
 module Ui.Prose exposing
-    ( column, paragraph
+    ( paragraph, column
     , numbered, bulleted, item
     , orderedList, unorderedList
     , ListIcon, decimal, disc, circle, custom
@@ -13,7 +13,7 @@ module Ui.Prose exposing
 
 # Text Layout
 
-@docs column, paragraph
+@docs paragraph, column
 
 
 # Lists
@@ -68,14 +68,15 @@ column attrs children =
 
 {-| A paragraph will layout all children as wrapped, inline elements.
 
-    import Element exposing (el, paragraph, text)
-    import Ui.Font as Font
+    import Ui
+    import Ui.Font
+    import Ui.Prose
 
     view =
-        paragraph []
-            [ text "lots of text ...."
-            , el [ Font.bold ] (text "this is bold")
-            , text "lots of text ...."
+        Ui.Prose.paragraph []
+            [ Ui.text "lots of text ...."
+            , Ui.el [ Ui.Font.bold ] (Ui.text "this is bold")
+            , Ui.text "lots of text ...."
             ]
 
 This is really useful when you want to markup text by having some parts be bold, or some be links, or whatever you so desire.
@@ -84,17 +85,17 @@ Also, if a child element has `alignLeft` or `alignRight`, then it will be moved 
 
 This makes it particularly easy to do something like a [dropped capital](https://en.wikipedia.org/wiki/Initial).
 
-    import Element exposing (alignLeft, el, padding, paragraph, text)
-    import Ui.Font as Font
+    import Ui
+    import Ui.Prose
 
     view =
-        paragraph []
-            [ el
-                [ alignLeft
-                , padding 5
+        Ui.Prose.paragraph []
+            [ Ui.el
+                [ Ui.alignLeft
+                , Ui.padding 5
                 ]
-                (text "S")
-            , text "o much text ...."
+                (Ui.text "S")
+            , Ui.text "o much text ...."
             ]
 
 Which will look something like
