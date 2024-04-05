@@ -8,7 +8,7 @@ module Ui.Anim exposing
     , opacity, x, y, rotation, scale, scaleX, scaleY
     , backgroundColor, fontColor, borderColor
     , keyframes, hoveredWith, focusedWith, pressedWith
-    , set, wait, step
+    , Step, set, wait, step
     , loop, loopFor
     , onTimeline, onTimelineWith
     , persistent
@@ -59,7 +59,7 @@ module Ui.Anim exposing
 
 @docs keyframes, hoveredWith, focusedWith, pressedWith
 
-@docs set, wait, step
+@docs Step, set, wait, step
 
 @docs loop, loopFor
 
