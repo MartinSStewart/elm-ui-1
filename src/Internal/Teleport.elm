@@ -95,64 +95,19 @@ type alias Box =
 
 type alias Event =
     { timestamp : Float
-    , box : Box
     , data : List Data
     }
 
 
 decode : Decode.Decoder Event
 decode =
-    Decode.map3 Event
+    Decode.map2 Event
         (Decode.field "timeStamp" Decode.float)
-        (Decode.field "target" decodeBox)
         (Decode.field "target"
             (Decode.field "data-elm-ui"
                 (Decode.list decodeData)
             )
         )
-
-
-
--- (Decode.succeed [])
-
-
-decodeBox : Decode.Decoder Box
-decodeBox =
-    Decode.map5
-        (\offsetLeft offsetTop width height parent ->
-            { x = offsetLeft + parent.offsetLeft
-            , y = offsetTop + parent.offsetTop
-            , width = width
-            , height = height
-            }
-        )
-        (Decode.field "offsetLeft" Decode.float)
-        (Decode.field "offsetTop" Decode.float)
-        (Decode.field "offsetWidth" Decode.float)
-        (Decode.field "offsetHeight" Decode.float)
-        (Decode.field "offsetParent" decodeAbsoluteParentOffset)
-
-
-decodeAbsoluteParentOffset : Decode.Decoder { offsetLeft : Float, offsetTop : Float }
-decodeAbsoluteParentOffset =
-    Decode.oneOf
-        [ Decode.null { offsetLeft = 0, offsetTop = 0 }
-        , Decode.map3
-            (\offsetLeft offsetTop offsetParent ->
-                { offsetLeft = offsetLeft + offsetParent.offsetLeft
-                , offsetTop = offsetTop + offsetParent.offsetTop
-                }
-            )
-            (Decode.field "offsetLeft" Decode.float)
-            (Decode.field "offsetTop" Decode.float)
-            (Decode.field "offsetParent"
-                (Decode.lazy
-                    (\() ->
-                        decodeAbsoluteParentOffset
-                    )
-                )
-            )
-        ]
 
 
 decodeData : Decode.Decoder Data
