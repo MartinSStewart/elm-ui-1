@@ -11,7 +11,6 @@ module Ui.Anim exposing
     , Step, set, wait, step
     , loop, loopFor
     , onTimeline, onTimelineWith
-    , persistent
     , mapAttribute
     )
 
@@ -69,11 +68,6 @@ module Ui.Anim exposing
 @docs onTimeline, onTimelineWith
 
 
-# Persistent Elements
-
-@docs persistent
-
-
 # Mapping
 
 @docs mapAttribute
@@ -91,7 +85,6 @@ import Internal.Flag as Flag
 import Internal.Model2 as Two
 import Internal.Style2 as Style
 import Internal.Teleport as Teleport
-import Internal.Teleport.Persistent as Persistent
 import InternalAnim.Css as Css
 import Json.Decode as Decode
 import Json.Encode as Encode
@@ -562,7 +555,6 @@ init =
     Two.State
         { added = Set.empty
         , rules = []
-        , boxes = Persistent.empty
         }
 
 

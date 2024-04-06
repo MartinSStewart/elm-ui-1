@@ -18,7 +18,6 @@ import Internal.Flag as Flag exposing (Flag)
 import Internal.Style.Generated as Generated
 import Internal.Style2 as Style
 import Internal.Teleport as Teleport
-import Internal.Teleport.Persistent as Persistent
 import Json.Decode as Json
 import Json.Encode as Encode
 import Set exposing (Set)
@@ -60,7 +59,6 @@ type State
     = State
         { added : Set String
         , rules : List String
-        , boxes : Persistent.Persistent Box
         }
 
 
@@ -176,47 +174,6 @@ update toAppMsg msg ((State details) as unchanged) =
 applyTeleported : Teleport.Event -> Teleport.Data -> ( State, List (Cmd Msg) ) -> ( State, List (Cmd Msg) )
 applyTeleported event data ( (State state) as untouched, cmds ) =
     case data of
-        Teleport.Persistent group instance ->
-            let
-                id =
-                    Persistent.id group instance
-            in
-            -- if this id matches an existing box in the cache
-            -- it means this box was previously rendered at the position found
-            case List.head <| Persistent.getOthersInGroup id state.boxes of
-                Nothing ->
-                    ( State
-                        { state
-                            | boxes =
-                                state.boxes
-                                    |> Persistent.insert id event.box
-                        }
-                    , cmds
-                    )
-
-                Just firstFound ->
-                    let
-                        newBox =
-                            event.box
-
-                        newCss =
-                            moveAnimationFixed
-                                (Teleport.persistentClass group instance)
-                                firstFound.value
-                                newBox
-                    in
-                    ( State
-                        { state
-                            | rules =
-                                state.rules
-                                    |> addRule newCss
-                            , boxes =
-                                state.boxes
-                                    |> Persistent.insert id event.box
-                        }
-                    , cmds
-                    )
-
         Teleport.Css css ->
             if Set.member css.hash state.added then
                 ( untouched, cmds )

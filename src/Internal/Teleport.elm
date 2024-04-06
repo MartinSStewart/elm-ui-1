@@ -54,8 +54,7 @@ encodeProp ( key, value ) =
 
 
 type Data
-    = Persistent String String
-    | Css Animator.Css
+    = Css Animator.Css
 
 
 type Trigger
@@ -158,12 +157,7 @@ decodeAbsoluteParentOffset =
 
 decodeData : Decode.Decoder Data
 decodeData =
-    Decode.oneOf
-        [ Decode.map Css decodeCss
-        , Decode.map2 Persistent
-            (Decode.field "group" Decode.string)
-            (Decode.field "instance" Decode.string)
-        ]
+    Decode.map Css decodeCss
 
 
 decodeCss : Decode.Decoder Animator.Css

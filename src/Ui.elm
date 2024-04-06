@@ -229,7 +229,6 @@ import Internal.Bits.Inheritance as Inheritance
 import Internal.Flag as Flag exposing (Flag)
 import Internal.Model2 as Two
 import Internal.Style2 as Style
-import Internal.Teleport.Persistent as Persistent
 import Json.Decode as Decode
 import Set
 
@@ -352,7 +351,6 @@ emptyState =
     Two.State
         { added = Set.empty
         , rules = []
-        , boxes = Persistent.empty
         }
 
 
