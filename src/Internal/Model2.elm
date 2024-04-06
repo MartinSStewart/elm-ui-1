@@ -181,13 +181,17 @@ applyTeleported event data ( (State state) as untouched, cmds ) =
             else
                 let
                     cssClass =
-                        "." ++ css.hash ++ "{" ++ addStylesToString css.props "" ++ "}"
+                        "." ++ css.hash ++ css.trigger ++ "{" ++ addStylesToString css.props "" ++ "}"
+
+                    disableTrigger =
+                        "." ++ css.hash ++ "." ++ Style.classes.trigger ++ "{ display: none; }"
                 in
                 ( State
                     { state
                         | rules =
                             state.rules
                                 |> addRule cssClass
+                                |> addRule disableTrigger
                                 |> addRule css.keyframes
                         , added = Set.insert css.hash state.added
                     }
@@ -319,11 +323,11 @@ teleport options =
                         options.style
                 , nearby =
                     Just
-                        ( InFront
+                        ( Trigger
                         , Element
                             (\_ ->
                                 Html.div
-                                    [ Attr.class (Style.classes.any ++ " " ++ Style.classes.trigger)
+                                    [ Attr.class (options.class ++ " " ++ Style.classes.trigger)
                                     , Attr.property "data-elm-ui" (Encode.list identity [ options.data ])
                                     , Attr.style "pointer-events" "none"
                                     ]
@@ -468,6 +472,8 @@ type Location
     | OnLeft
     | InFront
     | Behind
+      -- Special
+    | Trigger
 
 
 type Option
@@ -1652,32 +1658,39 @@ onKeyListener desiredCode msg =
 
 nearbyToHtml : Inheritance.Encoded -> Location -> Element msg -> Html.Html msg
 nearbyToHtml inheritance location (Element elem) =
-    Html.div
-        [ Attr.class <|
-            Style.classes.nearby
-                ++ (" " ++ Style.classes.el ++ " ")
-                ++ (case location of
-                        Above ->
-                            Style.classes.above
+    if location == Trigger then
+        elem inheritance
 
-                        Below ->
-                            Style.classes.below
+    else
+        Html.div
+            [ Attr.class <|
+                Style.classes.nearby
+                    ++ (" " ++ Style.classes.el ++ " ")
+                    ++ (case location of
+                            Above ->
+                                Style.classes.above
 
-                        OnRight ->
-                            Style.classes.onRight
+                            Below ->
+                                Style.classes.below
 
-                        OnLeft ->
-                            Style.classes.onLeft
+                            OnRight ->
+                                Style.classes.onRight
 
-                        InFront ->
-                            Style.classes.inFront
+                            OnLeft ->
+                                Style.classes.onLeft
 
-                        Behind ->
-                            Style.classes.behind
-                   )
-        ]
-        [ elem inheritance
-        ]
+                            InFront ->
+                                Style.classes.inFront
+
+                            Behind ->
+                                Style.classes.behind
+
+                            Trigger ->
+                                Style.classes.trigger
+                       )
+            ]
+            [ elem inheritance
+            ]
 
 
 zero : BitField.Bits

@@ -125,7 +125,7 @@ onTimeline timeline fn =
         { trigger = onRenderTrigger
         , class = css.hash
         , style = []
-        , data = Teleport.encodeCss css
+        , data = Teleport.encodeCss "" css
         }
 
 
@@ -243,8 +243,8 @@ transitionWithTrigger trigger dur attrs =
         , style = [ ( "transition", css.transition ) ]
         , data =
             css
-                |> addPsuedoClass triggerPsuedo
-                |> Teleport.encodeCss
+                -- |> addPsuedoClass triggerPsuedo
+                |> Teleport.encodeCss triggerPsuedo
         }
 
 
@@ -417,7 +417,7 @@ onTimelineWith timeline fn =
         , style = []
         , data =
             Animator.css timeline fn
-                |> Teleport.encodeCss
+                |> Teleport.encodeCss ""
         }
 
 
@@ -433,7 +433,7 @@ keyframes steps =
         { trigger = onRenderTrigger
         , class = css.hash
         , style = []
-        , data = Teleport.encodeCss css
+        , data = Teleport.encodeCss "" css
         }
 
 
@@ -449,7 +449,7 @@ hoveredWith steps =
         { trigger = onHoverTrigger
         , class = css.hash
         , style = []
-        , data = Teleport.encodeCss css
+        , data = Teleport.encodeCss ":hover" css
         }
 
 
@@ -465,7 +465,7 @@ focusedWith steps =
         { trigger = onFocusTrigger
         , class = css.hash
         , style = []
-        , data = Teleport.encodeCss css
+        , data = Teleport.encodeCss ":focus" css
         }
 
 
@@ -481,7 +481,7 @@ pressedWith steps =
         { trigger = onActiveTrigger
         , class = css.hash
         , style = []
-        , data = Teleport.encodeCss css
+        , data = Teleport.encodeCss ":active" css
         }
 
 

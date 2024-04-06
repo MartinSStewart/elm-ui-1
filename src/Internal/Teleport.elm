@@ -1,6 +1,6 @@
 module Internal.Teleport exposing
     ( persistentClass, persistentId
-    , Box, Data(..), Event, Trigger(..), decode, encodeCss, stringToTrigger
+    , Box, CssAnimation, Data(..), Event, Trigger(..), decode, encodeCss, stringToTrigger
     )
 
 {-| This is data that is teleported to the central state.
@@ -31,10 +31,11 @@ persistentId group instance =
 -- ENCODER
 
 
-encodeCss : Animator.Css -> Encode.Value
-encodeCss css =
+encodeCss : String -> Animator.Css -> Encode.Value
+encodeCss trigger css =
     Encode.object
-        [ ( "hash", Encode.string css.hash )
+        [ ( "trigger", Encode.string trigger )
+        , ( "hash", Encode.string css.hash )
         , ( "keyframes", Encode.string css.keyframes )
         , ( "transition", Encode.string css.transition )
         , ( "props", Encode.list encodeProp css.props )
@@ -54,7 +55,7 @@ encodeProp ( key, value ) =
 
 
 type Data
-    = Css Animator.Css
+    = Css CssAnimation
 
 
 type Trigger
@@ -115,9 +116,19 @@ decodeData =
     Decode.map Css decodeCss
 
 
-decodeCss : Decode.Decoder Animator.Css
+type alias CssAnimation =
+    { trigger : String
+    , hash : String
+    , keyframes : String
+    , transition : String
+    , props : List ( String, String )
+    }
+
+
+decodeCss : Decode.Decoder CssAnimation
 decodeCss =
-    Decode.map4 Animator.Css
+    Decode.map5 CssAnimation
+        (Decode.field "trigger" Decode.string)
         (Decode.field "hash" Decode.string)
         (Decode.field "keyframes" Decode.string)
         (Decode.field "transition" Decode.string)

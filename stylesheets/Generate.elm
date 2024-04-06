@@ -1375,10 +1375,8 @@ animationTriggers =
     let
         toTrigger baseClass props =
             Descriptor baseClass
-                [ Child "*"
-                    [ Child (dot classes.trigger)
-                        props
-                    ]
+                [ Child (dot classes.trigger)
+                    props
                 ]
     in
     [ toTrigger ".on-hovered:hover"
