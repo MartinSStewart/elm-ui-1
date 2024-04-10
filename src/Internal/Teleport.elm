@@ -31,11 +31,12 @@ persistentId group instance =
 -- ENCODER
 
 
-encodeCss : String -> Animator.Css -> Encode.Value
-encodeCss trigger css =
+encodeCss : String -> String -> Animator.Css -> Encode.Value
+encodeCss trigger keyframesHash css =
     Encode.object
         [ ( "trigger", Encode.string trigger )
         , ( "hash", Encode.string css.hash )
+        , ( "keyframesHash", Encode.string keyframesHash )
         , ( "keyframes", Encode.string css.keyframes )
         , ( "transition", Encode.string css.transition )
         , ( "props", Encode.list encodeProp css.props )
@@ -119,6 +120,7 @@ decodeData =
 type alias CssAnimation =
     { trigger : String
     , hash : String
+    , keyframesHash : String
     , keyframes : String
     , transition : String
     , props : List ( String, String )
@@ -127,9 +129,10 @@ type alias CssAnimation =
 
 decodeCss : Decode.Decoder CssAnimation
 decodeCss =
-    Decode.map5 CssAnimation
+    Decode.map6 CssAnimation
         (Decode.field "trigger" Decode.string)
         (Decode.field "hash" Decode.string)
+        (Decode.field "keyframesHash" Decode.string)
         (Decode.field "keyframes" Decode.string)
         (Decode.field "transition" Decode.string)
         (Decode.field "props" (Decode.list decodeProp))

@@ -51,14 +51,11 @@ type Msg
     | Teleported Teleport.Trigger Teleport.Event
 
 
-
--- | BoxNew Id Box
-
-
 type State
     = State
         { added : Set String
         , rules : List String
+        , keyframes : List String
         }
 
 
@@ -68,50 +65,6 @@ type alias Box =
     , width : Float
     , height : Float
     }
-
-
-moveAnimationFixed : String -> Box -> Box -> String
-moveAnimationFixed className previous current =
-    let
-        from =
-            bboxCss previous
-
-        to =
-            bboxCss current
-
-        keyframes =
-            "@keyframes " ++ className ++ " { from { " ++ from ++ " } to { " ++ to ++ "} }"
-
-        classRule =
-            "." ++ className ++ "{ position:fixed; animation: " ++ className ++ " 2000ms !important; animation-fill-mode: both !important; }"
-    in
-    keyframes ++ classRule
-
-
-bboxCss : Box -> String
-bboxCss box =
-    "left:"
-        ++ String.fromFloat box.x
-        ++ "px; top: "
-        ++ String.fromFloat box.y
-        ++ "px; width:"
-        ++ String.fromFloat box.width
-        ++ "px; height:"
-        ++ String.fromFloat box.height
-        ++ "px;"
-
-
-bboxTransform : Box -> String
-bboxTransform box =
-    "transform:translate("
-        ++ String.fromFloat box.x
-        ++ "px, "
-        ++ String.fromFloat box.y
-        ++ "px); width:"
-        ++ String.fromFloat box.width
-        ++ "px; height:"
-        ++ String.fromFloat box.height
-        ++ "px;"
 
 
 type alias Animator msg model =
@@ -185,6 +138,14 @@ applyTeleported event data ( (State state) as untouched, cmds ) =
 
                     disableTrigger =
                         "." ++ css.hash ++ "." ++ Style.classes.trigger ++ "{ display: none; }"
+
+                    keyframes =
+                        if Set.member css.keyframesHash state.added then
+                            state.keyframes
+
+                        else
+                            state.keyframes
+                                |> addRule css.keyframes
                 in
                 ( State
                     { state
@@ -192,8 +153,11 @@ applyTeleported event data ( (State state) as untouched, cmds ) =
                             state.rules
                                 |> addRule cssClass
                                 |> addRule disableTrigger
-                                |> addRule css.keyframes
-                        , added = Set.insert css.hash state.added
+                        , keyframes = keyframes
+                        , added =
+                            state.added
+                                |> Set.insert css.hash
+                                |> Set.insert css.keyframesHash
                     }
                 , cmds
                 )
@@ -906,6 +870,7 @@ renderLayout { options, includeStaticStylesheet } (State state) attrs content =
                                 else
                                     Html.text ""
                               )
+                            , ( "keyframes", Html.Lazy.lazy keyframeRules state.keyframes )
                             , ( "animations", Html.Lazy.lazy styleRules state.rules )
                             ]
                     )
@@ -919,18 +884,27 @@ renderLayout { options, includeStaticStylesheet } (State state) attrs content =
 
 staticStyles : Html.Html msg
 staticStyles =
-    Html.div []
+    Html.div [ Attr.id "elm-ui-static-styles" ]
         [ Html.node "style"
-            [ Attr.id "elm-ui-static-styles" ]
+            []
             [ Html.text Style.rules ]
+        ]
+
+
+keyframeRules : List String -> Html.Html msg
+keyframeRules styleStr =
+    Html.div [ Attr.id "elm-ui-keyframe-rules" ]
+        [ Html.node "style"
+            []
+            [ Html.text (String.join "\n" styleStr) ]
         ]
 
 
 styleRules : List String -> Html.Html msg
 styleRules styleStr =
-    Html.div []
+    Html.div [ Attr.id "elm-ui-dynamic-styles" ]
         [ Html.node "style"
-            [ Attr.id "elm-ui-dynamic-styles" ]
+            []
             [ Html.text (String.join "\n" styleStr) ]
         ]
 
@@ -2051,9 +2025,11 @@ renderMediaProps i =
 {-| -}
 renderOptions : List Option -> Html.Html msg
 renderOptions opts =
-    Html.node "style"
-        [ Attr.id "elm-ui-responsiveness" ]
-        (renderOptionItem { breakpoints = False, focus = False } [] opts)
+    Html.div [ Attr.id "elm-ui-responsiveness" ]
+        [ Html.node "style"
+            []
+            (renderOptionItem { breakpoints = False, focus = False } [] opts)
+        ]
 
 
 renderOptionItem :

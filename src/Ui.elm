@@ -351,6 +351,7 @@ emptyState =
     Two.State
         { added = Set.empty
         , rules = []
+        , keyframes = []
         }
 
 

@@ -7,6 +7,8 @@ module Ui.Anim exposing
     , transition, hovered, focused, pressed
     , opacity, x, y, rotation, scale, scaleX, scaleY
     , backgroundColor, fontColor, borderColor
+    , Transition, withTransition, withStepTransition
+    , linear, spring, bezier
     , keyframes, hoveredWith, focusedWith, pressedWith
     , Step, set, wait, step
     , loop, loopFor
@@ -40,6 +42,13 @@ module Ui.Anim exposing
 @docs opacity, x, y, rotation, scale, scaleX, scaleY
 
 @docs backgroundColor, fontColor, borderColor
+
+
+# Transitions
+
+@docs Transition, withTransition, withStepTransition
+
+@docs linear, spring, bezier
 
 -- @docs padding, paddingEach, backgroundColor, border, font, height, width
 
@@ -76,6 +85,7 @@ module Ui.Anim exposing
 
 import Animator
 import Animator.Timeline exposing (Timeline)
+import Animator.Transition
 import Animator.Watcher
 import Color
 import Html
@@ -100,35 +110,68 @@ type alias Animated =
     Animator.Attribute
 
 
+
+-- {-| -}
+-- persistent : String -> String -> Attribute msg
+-- persistent group instance =
+--     --  attach a class and a message handler for the animation message
+--     -- we could also need to gather up any animateable state as well
+--     Two.teleport
+--         { trigger = onRenderTrigger
+--         , class = Teleport.persistentClass group instance
+--         , style = []
+--         , data =
+--             Teleport.persistentId group instance
+--         }
+
+
 {-| -}
-persistent : String -> String -> Attribute msg
-persistent group instance =
-    --  attach a class and a message handler for the animation message
-    -- we could also need to gather up any animateable state as well
-    Two.teleport
-        { trigger = onRenderTrigger
-        , class = Teleport.persistentClass group instance
-        , style = []
-        , data =
-            Teleport.persistentId group instance
-        }
+type alias Transition =
+    Animator.Transition.Transition
+
+
+{-| -}
+linear : Transition
+linear =
+    Animator.Transition.linear
+
+
+{-| -}
+spring :
+    { wobble : Float
+    , quickness : Float
+    }
+    -> Transition
+spring =
+    Animator.Transition.spring
+
+
+{-| -}
+bezier : Float -> Float -> Float -> Float -> Transition
+bezier one two three four =
+    Animator.Transition.bezier one two three four
+
+
+{-| -}
+withTransition : Transition -> Animated -> Animated
+withTransition =
+    Animator.withTransition
+
+
+{-| -}
+withStepTransition : Transition -> Step -> Step
+withStepTransition =
+    Animator.withStepTransition
 
 
 {-| -}
 onTimeline : Timeline state -> (state -> List Animated) -> Attribute msg
 onTimeline timeline fn =
-    let
-        css =
-            Animator.css timeline (\state -> ( fn state, [] ))
-    in
-    Two.teleport
-        { trigger = onRenderTrigger
-        , class = css.hash
-        , style = []
-        , data = Teleport.encodeCss "" css
-        }
+    Animator.css timeline (\state -> ( fn state, [] ))
+        |> toAttr OnRender
 
 
+{-| -}
 type alias Step =
     Animator.Step
 
@@ -200,52 +243,82 @@ type Trigger
     = Hover
     | Focus
     | Active
+    | OnRender
+
+
+triggerClass : Trigger -> String
+triggerClass trigger =
+    case trigger of
+        Hover ->
+            onHoverTrigger
+
+        Focus ->
+            onFocusTrigger
+
+        Active ->
+            onActiveTrigger
+
+        OnRender ->
+            onRenderTrigger
+
+
+triggerPsuedo : Trigger -> String
+triggerPsuedo trigger =
+    case trigger of
+        Hover ->
+            ":hover"
+
+        Focus ->
+            ":focus"
+
+        Active ->
+            ":active"
+
+        OnRender ->
+            ""
+
+
+addTriggerToCssClass : Trigger -> Animator.Css -> Animator.Css
+addTriggerToCssClass trigger css =
+    { css
+        | hash =
+            triggerClass trigger ++ css.hash
+    }
+
+
+toAttr : Trigger -> Animator.Css -> Attribute msg
+toAttr trigger incomingCss =
+    let
+        css =
+            incomingCss
+                |> addTriggerToCssClass trigger
+    in
+    Two.teleport
+        { trigger = triggerClass trigger
+        , class = css.hash
+        , style =
+            if css.transition == "" then
+                [ ( "transition", "transform 1000ms" ) ]
+
+            else
+                [ ( "transition", css.transition ) ]
+        , data =
+            css
+                |> Teleport.encodeCss (triggerPsuedo trigger) incomingCss.hash
+        }
 
 
 transitionWithTrigger : Trigger -> Duration -> List Animated -> Attribute msg
 transitionWithTrigger trigger dur attrs =
-    let
-        css =
-            Animator.css
-                (Animator.Timeline.init []
-                    |> Animator.Timeline.to dur attrs
-                    |> Animator.Timeline.update (Time.millisToPosix 1)
-                )
-                (\animated ->
-                    ( animated, [] )
-                )
-
-        triggerClass =
-            case trigger of
-                Hover ->
-                    onHoverTrigger
-
-                Focus ->
-                    onFocusTrigger
-
-                Active ->
-                    onActiveTrigger
-
-        triggerPsuedo =
-            case trigger of
-                Hover ->
-                    ":hover"
-
-                Focus ->
-                    ":focus"
-
-                Active ->
-                    ":active"
-    in
-    Two.teleport
-        { trigger = triggerClass
-        , class = css.hash
-        , style = [ ( "transition", css.transition ) ]
-        , data =
-            css
-                -- |> addPsuedoClass triggerPsuedo
-                |> Teleport.encodeCss triggerPsuedo
-        }
+    Animator.css
+        (Animator.Timeline.init []
+            |> Animator.Timeline.to dur attrs
+            |> Animator.Timeline.update (Time.millisToPosix 1)
+        )
+        (\animated ->
+            ( animated, [] )
+        )
+        |> toAttr trigger
 
 
 addPsuedoClass : String -> Animator.Css -> Animator.Css
@@ -411,78 +484,40 @@ onTimelineWith :
         )
     -> Attribute msg
 onTimelineWith timeline fn =
-    Two.teleport
-        { trigger = onRenderTrigger
-        , class = onRenderTrigger
-        , style = []
-        , data =
-            Animator.css timeline fn
-                |> Teleport.encodeCss ""
-        }
+    Animator.css timeline fn
+        |> toAttr OnRender
 
 
 {-| -}
 keyframes : List Step -> Attribute msg
 keyframes steps =
-    let
-        css =
-            Animator.keyframes steps
-                |> Animator.toCss
-    in
-    Two.teleport
-        { trigger = onRenderTrigger
-        , class = css.hash
-        , style = []
-        , data = Teleport.encodeCss "" css
-        }
+    Animator.keyframes steps
+        |> Animator.toCss
+        |> toAttr OnRender
 
 
 {-| -}
 hoveredWith : List Step -> Attribute msg
 hoveredWith steps =
-    let
-        css =
-            Animator.keyframes steps
-                |> Animator.toCss
-    in
-    Two.teleport
-        { trigger = onHoverTrigger
-        , class = css.hash
-        , style = []
-        , data = Teleport.encodeCss ":hover" css
-        }
+    Animator.keyframes steps
+        |> Animator.toCss
+        |> toAttr Hover
 
 
 {-| -}
 focusedWith : List Step -> Attribute msg
 focusedWith steps =
-    let
-        css =
-            Animator.keyframes steps
-                |> Animator.toCss
-    in
-    Two.teleport
-        { trigger = onFocusTrigger
-        , class = css.hash
-        , style = []
-        , data = Teleport.encodeCss ":focus" css
-        }
+    Animator.keyframes steps
+        |> Animator.toCss
+        |> toAttr Focus
 
 
 {-| -}
 pressedWith : List Step -> Attribute msg
 pressedWith steps =
-    let
-        css =
-            Animator.keyframes steps
-                |> Animator.toCss
-    in
-    Two.teleport
-        { trigger = onActiveTrigger
-        , class = css.hash
-        , style = []
-        , data = Teleport.encodeCss ":active" css
-        }
+    Animator.keyframes steps
+        |> Animator.toCss
+        |> toAttr Active
 
 
 
@@ -555,6 +590,7 @@ init =
     Two.State
         { added = Set.empty
         , rules = []
+        , keyframes = []
         }
 
 
