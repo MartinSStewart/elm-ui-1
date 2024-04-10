@@ -3,6 +3,7 @@ module Theme exposing
     , description
     , garamond
     , gradient
+    , grey
     , h1
     , h2
     , hr

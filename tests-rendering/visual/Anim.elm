@@ -7,6 +7,7 @@ import Html
 import Html.Attributes as Attr
 import Html.Events as Events
 import Json.Decode
+import Theme
 import Ui exposing (..)
 import Ui.Anim
 import Ui.Events
@@ -37,8 +38,7 @@ main =
 
 
 init () =
-    ( { focus = Detail
-      , ui = Ui.Anim.init
+    ( { ui = Ui.Anim.init
       , checked = False
       , email = ""
       }
@@ -46,24 +46,9 @@ init () =
     )
 
 
-type Id
-    = One Int
-
-
-id val =
-    case val of
-        One i ->
-            Ui.Anim.persistent "one" (String.fromInt i)
-
-
 type Msg
     = Ui Ui.Anim.Msg
-    | Focus Focus
-
-
-type Focus
-    = Mini
-    | Detail
+    | Clicked
 
 
 update msg model =
@@ -77,8 +62,8 @@ update msg model =
             , cmd
             )
 
-        Focus focus ->
-            ( { model | focus = focus }
+        Clicked ->
+            ( model
             , Cmd.none
             )
 
@@ -103,85 +88,290 @@ view model =
         , breakpoints = Just breakpoints
         }
         model.ui
-        [ Ui.Font.italic
-        , Ui.Font.size 32
-        , Ui.Font.gradient
-            (Ui.Gradient.linear (Ui.turns 0)
-                [ Ui.Gradient.percent 0 (rgb 0 255 255)
-                , Ui.Gradient.percent 20 (rgb 255 255 255)
-                , Ui.Gradient.percent 100 (rgb 255 255 255)
-                ]
-            )
-        , Ui.Font.color (rgb 0 0 0)
-        , Ui.Font.font
+        [ Ui.Font.font
             { name = "EB Garamond"
             , fallback = [ Ui.Font.serif ]
             , variants =
                 []
             , weight = Ui.Font.regular
-            , size = 16
+            , size = 32
             , lineSpacing = 4
             , capitalSizeRatio = 0.7
             }
         , Ui.Events.onClick
-            (Focus
-                (case model.focus of
-                    Detail ->
-                        Mini
-
-                    Mini ->
-                        Detail
-                )
-            )
+            Clicked
         ]
-        (row
-            [ centerX
-            , spacing 64
-            , height fill
+        (Ui.column
+            [ Ui.width (Ui.px 800)
+            , Ui.centerX
+            , Ui.padding 100
+            , Ui.spacing 100
             ]
-            [ row [ height (px 800), width (px 500) ]
-                [ if model.focus == Mini then
-                    viewData model.focus
-
-                  else
-                    none
+            [ Theme.h1 "Row"
+            , Theme.description "Hello"
+            , Theme.h1 "Hovering animations are independent"
+            , Ui.row [ Ui.spacing 20 ]
+                [ box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 200)
+                        [ Ui.Anim.backgroundColor Theme.pink
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 200)
+                        [ Ui.Anim.backgroundColor Theme.pink
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 200)
+                        [ Ui.Anim.backgroundColor Theme.pink
+                        ]
+                    ]
                 ]
-            , row [ height (px 800), width (px 500), padding 80, spacing 10 ]
-                [ if model.focus == Detail then
-                    viewData model.focus
-
-                  else
-                    none
-                , text "yooo"
+            , Theme.h1 "Border color works too"
+            , Ui.row [ Ui.spacing 20 ]
+                [ box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 200)
+                        [ Ui.Anim.borderColor Theme.pink
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 200)
+                        [ Ui.Anim.borderColor Theme.pink
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 200)
+                        [ Ui.Anim.borderColor Theme.pink
+                        ]
+                    ]
                 ]
+            , Theme.h1 "Both work at the same time"
+            , Ui.row [ Ui.spacing 20 ]
+                [ box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 200)
+                        [ Ui.Anim.backgroundColor Theme.grey
+                        , Ui.Anim.borderColor Theme.pink
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 200)
+                        [ Ui.Anim.backgroundColor Theme.grey
+                        , Ui.Anim.borderColor Theme.pink
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 200)
+                        [ Ui.Anim.backgroundColor Theme.grey
+                        , Ui.Anim.borderColor Theme.pink
+                        ]
+                    ]
+                ]
+            , Theme.h1 "Even if declared separately, both work at the same time  (Actually, this doesn't work!  And would be complicated to fix)"
+            , Ui.row [ Ui.spacing 20 ]
+                [ box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 2000)
+                        [ Ui.Anim.backgroundColor Theme.grey
+                        ]
+                    , Ui.Anim.hovered (Ui.Anim.ms 2000)
+                        [ Ui.Anim.borderColor Theme.pink
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 2000)
+                        [ Ui.Anim.backgroundColor Theme.grey
+                        ]
+                    , Ui.Anim.hovered (Ui.Anim.ms 2000)
+                        [ Ui.Anim.borderColor Theme.pink
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 2000)
+                        [ Ui.Anim.backgroundColor Theme.grey
+                        ]
+                    , Ui.Anim.hovered (Ui.Anim.ms 2000)
+                        [ Ui.Anim.borderColor Theme.pink
+                        ]
+                    ]
+                ]
+            , Theme.h1 "A simple spinning animation (standard, linear, wobble)"
+            , Ui.row [ Ui.spacing 20 ]
+                [ box
+                    [ Ui.Anim.keyframes
+                        [ Ui.Anim.loop
+                            [ Ui.Anim.set
+                                [ Ui.Anim.rotation 0
+                                ]
+                            , Ui.Anim.step (Ui.Anim.ms 2000)
+                                [ Ui.Anim.rotation 1
+                                ]
+                            ]
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.keyframes
+                        [ Ui.Anim.loop
+                            [ Ui.Anim.set
+                                [ Ui.Anim.rotation 0
+                                ]
+                            , Ui.Anim.step (Ui.Anim.ms 2000)
+                                [ Ui.Anim.rotation 1
+                                    |> Ui.Anim.withTransition Ui.Anim.linear
+                                ]
+                            ]
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.keyframes
+                        [ Ui.Anim.loop
+                            [ Ui.Anim.set
+                                [ Ui.Anim.rotation 0
+                                ]
+                            , Ui.Anim.step (Ui.Anim.ms 2000)
+                                [ Ui.Anim.rotation 1
+                                    |> Ui.Anim.withTransition
+                                        (Ui.Anim.spring
+                                            { wobble = 1
+                                            , quickness = 0
+                                            }
+                                        )
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+            , Theme.h1 "Rotation on hover"
+            , Ui.row [ Ui.spacing 20 ]
+                [ box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 1000)
+                        [ Ui.Anim.rotation 1
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 1000)
+                        [ Ui.Anim.rotation 1
+                            |> Ui.Anim.withTransition Ui.Anim.linear
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 1000)
+                        [ Ui.Anim.rotation 1
+                            |> Ui.Anim.withTransition
+                                (Ui.Anim.spring
+                                    { wobble = 1
+                                    , quickness = 0
+                                    }
+                                )
+                        ]
+                    ]
+                ]
+            , Theme.h1 "A simple looping animation (on hover, standard, linear, wobble)"
+            , Ui.row [ Ui.spacing 20 ]
+                [ box
+                    [ Ui.Anim.hoveredWith
+                        [ Ui.Anim.loop
+                            [ Ui.Anim.set
+                                [ Ui.Anim.rotation 0
+                                ]
+                            , Ui.Anim.step (Ui.Anim.ms 2000)
+                                [ Ui.Anim.rotation 1
+                                ]
+                            ]
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.hoveredWith
+                        [ Ui.Anim.loop
+                            [ Ui.Anim.set
+                                [ Ui.Anim.rotation 0
+                                ]
+                            , Ui.Anim.step (Ui.Anim.ms 2000)
+                                [ Ui.Anim.rotation 1
+                                    |> Ui.Anim.withTransition Ui.Anim.linear
+                                ]
+                            ]
+                        ]
+                    ]
+                , box
+                    [ Ui.Anim.hoveredWith
+                        [ Ui.Anim.loop
+                            [ Ui.Anim.set
+                                [ Ui.Anim.rotation 0
+                                ]
+                            , Ui.Anim.step (Ui.Anim.ms 2000)
+                                [ Ui.Anim.rotation 1
+                                    |> Ui.Anim.withTransition
+                                        (Ui.Anim.spring
+                                            { wobble = 1
+                                            , quickness = 0
+                                            }
+                                        )
+                                ]
+                            ]
+                        ]
+                    ]
+                ]
+
+            -- , Ui.row [ Ui.spacing 20 ]
+            --     (List.map
+            --         (\wobble ->
+            --             mini
+            --                 [ Ui.Anim.keyframes
+            --                     [ Ui.Anim.loop
+            --                         [ Ui.Anim.set
+            --                             [ Ui.Anim.rotation 0
+            --                             ]
+            --                         , Ui.Anim.step (Ui.Anim.ms 2000)
+            --                             [ Ui.Anim.rotation 1
+            --                                 |> Ui.Anim.withTransition
+            --                                     (Ui.Anim.spring
+            --                                         { wobble = wobble
+            --                                         , quickness = 0
+            --                                         }
+            --                                     )
+            --                             ]
+            --                         ]
+            --                     -- |> Ui.Anim.withStepTransition Ui.Anim.wobble 0.2
+            --                     ]
+            --                 ]
+            --         )
+            --         [ 0
+            --         , 0.1
+            --         , 0.2
+            --         , 0.3
+            --         , 0.4
+            --         , 0.5
+            --         , 0.6
+            --         , 0.7
+            --         , 0.8
+            --         , 0.9
+            --         , 1
+            --         ]
+            --     )
             ]
         )
 
 
-viewData : Focus -> Ui.Element Msg
-viewData focus =
-    case focus of
-        Mini ->
-            el
-                [ id (One 0)
-                , width fill
-                , padding 24
-                , Ui.background (rgb 255 255 255)
-                , Ui.rounded 3
-                , Ui.border 3
-                , Ui.borderColor (rgb 0 0 0)
-                ]
-                (text "Mini")
+mini attrs =
+    Ui.el
+        ([ Ui.width (Ui.px 30)
+         , Ui.height (Ui.px 30)
+         , Ui.background Theme.black
+         , Ui.border 2
+         , Ui.borderColor Theme.black
+         ]
+            ++ attrs
+        )
+        Ui.none
 
-        Detail ->
-            column
-                [ id (One 1)
-                , width fill
-                , height fill
-                , padding 24
-                , Ui.background (rgb 0 255 255)
-                , Ui.rounded 3
-                ]
-                [ el [] (text "Details")
-                , el [] (text "so many details")
-                ]
+
+box attrs =
+    Ui.el
+        ([ Ui.width (Ui.px 200)
+         , Ui.height (Ui.px 200)
+         , Ui.background Theme.black
+         , Ui.border 10
+         , Ui.borderColor Theme.black
+         ]
+            ++ attrs
+        )
+        Ui.none
