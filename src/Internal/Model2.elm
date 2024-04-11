@@ -992,7 +992,10 @@ element node layout attrs children =
                 finalChildren =
                     toChildren myBits analyzedBits attrs children
             in
-            if BitField.has AnalyzeBits.isLink analyzedBits then
+            if node == NodeAsImage then
+                Html.img styleAttrs finalChildren
+
+            else if BitField.has AnalyzeBits.isLink analyzedBits then
                 Html.a styleAttrs finalChildren
 
             else if BitField.has AnalyzeBits.isButton analyzedBits then
