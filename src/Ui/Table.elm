@@ -2,9 +2,11 @@ module Ui.Table exposing
     ( Column, column, Cell, cell
     , header, withWidth
     , view, Config, columns
-    , withRowKey, onRowClick, withScrollable
+    , withRowKey, onRowClick, withRowAttributes
+    , withScrollable
     , viewWithState
     , columnWithState, withVisibility, withOrder, withSummary
+    , withRowState
     , withSort
     )
 
@@ -43,7 +45,9 @@ module Ui.Table exposing
 
 @docs view, Config, columns
 
-@docs withRowKey, onRowClick, withScrollable
+@docs withRowKey, onRowClick, withRowAttributes
+
+@docs withScrollable
 
 
 # Advanced Tables with State
@@ -51,6 +55,8 @@ module Ui.Table exposing
 @docs viewWithState
 
 @docs columnWithState, withVisibility, withOrder, withSummary
+
+@docs withRowState
 
 @docs withSort
 
@@ -66,11 +72,15 @@ import Ui.Lazy
 
 
 {-| -}
-type alias Config state data msg =
+type alias Config globalState rowState data msg =
     { toKey : data -> String
-    , columns : List (Column state data msg)
-    , sort : Maybe (state -> List data -> List data)
+    , columns : List (Column globalState rowState data msg)
+    , sort : Maybe (globalState -> List data -> List data)
+
+    -- Row config
+    , toRowState : Maybe (globalState -> Int -> Maybe rowState)
     , onRowClick : Maybe (data -> msg)
+    , toRowAttrs : Maybe (Maybe rowState -> data -> List (Attribute msg))
     , stickHeader : Bool
     , stickRow : data -> Bool
     , stickFirstColumn : Bool
@@ -80,12 +90,14 @@ type alias Config state data msg =
 
 {-| -}
 columns :
-    List (Column state data msg)
-    -> Config state data msg
+    List (Column globalState rowState data msg)
+    -> Config globalState rowState data msg
 columns cols =
     { toKey = \_ -> "keyed"
     , columns = cols
+    , toRowState = Nothing
     , onRowClick = Nothing
+    , toRowAttrs = Nothing
     , stickHeader = False
     , stickRow = \_ -> False
     , stickFirstColumn = False
@@ -96,19 +108,40 @@ columns cols =
 
 {-| Adding a `key` to a row will automatically use `Keyed` under the hood.
 -}
-withRowKey : (data -> String) -> Config state data msg -> Config state data msg
+withRowKey : (data -> String) -> Config globalState rowState data msg -> Config globalState rowState data msg
 withRowKey toKey cfg =
     { cfg | toKey = toKey }
 
 
 {-| -}
-onRowClick : (data -> msg) -> Config state data msg -> Config state data msg
+withRowState :
+    (globalState -> Int -> Maybe rowState)
+    -> Config globalState rowState data msg
+    -> Config globalState rowState data msg
+withRowState toState cfg =
+    { cfg | toRowState = Just toState }
+
+
+{-| -}
+onRowClick :
+    (data -> msg)
+    -> Config globalState rowState data msg
+    -> Config globalState rowState data msg
 onRowClick onClick cfg =
     { cfg | onRowClick = Just onClick }
 
 
 {-| -}
-withSort : (state -> List data -> List data) -> Config state data msg -> Config state data msg
+withRowAttributes :
+    (Maybe rowState -> data -> List (Attribute msg))
+    -> Config globalState rowState data msg
+    -> Config globalState rowState data msg
+withRowAttributes toRowAttrs cfg =
+    { cfg | toRowAttrs = Just toRowAttrs }
+
+
+{-| -}
+withSort : (globalState -> List data -> List data) -> Config globalState rowState data msg -> Config globalState rowState data msg
 withSort sort cfg =
     { cfg | sort = Just sort }
 
@@ -117,8 +150,8 @@ withSort sort cfg =
 withScrollable :
     { stickFirstColumn : Bool
     }
-    -> Config state data msg
-    -> Config state data msg
+    -> Config globalState rowState data msg
+    -> Config globalState rowState data msg
 withScrollable input cfg =
     { cfg
         | scrollable = True
@@ -128,22 +161,22 @@ withScrollable input cfg =
 
 
 {-| -}
-type Column state data msg
-    = Column (ColumnDetails state data msg)
+type Column globalState rowState data msg
+    = Column (ColumnDetails globalState rowState data msg)
 
 
-type alias ColumnDetails state data msg =
-    { header : state -> Cell msg
+type alias ColumnDetails globalState rowState data msg =
+    { header : globalState -> Cell msg
     , width :
         Maybe
             { fill : Bool
             , min : Maybe Int
             , max : Maybe Int
             }
-    , view : Int -> state -> data -> Cell msg
-    , visible : state -> Bool
-    , order : state -> Int
-    , summary : Maybe (state -> List data -> Cell msg)
+    , view : Int -> Maybe rowState -> data -> Cell msg
+    , visible : Maybe (globalState -> Bool)
+    , order : Maybe (globalState -> Int)
+    , summary : Maybe (globalState -> List data -> Cell msg)
     }
 
 
@@ -214,31 +247,31 @@ column :
     { header : Cell msg
     , view : data -> Cell msg
     }
-    -> Column state data msg
+    -> Column globalState rowState data msg
 column input =
     Column
         { header = \_ -> input.header
         , view = \_ _ data -> input.view data
         , width = Nothing
-        , visible = \_ -> True
-        , order = \_ -> 0
+        , visible = Nothing
+        , order = Nothing
         , summary = Nothing
         }
 
 
 {-| -}
 columnWithState :
-    { header : state -> Cell msg
-    , view : Int -> state -> data -> Cell msg
+    { header : globalState -> Cell msg
+    , view : Int -> Maybe rowState -> data -> Cell msg
     }
-    -> Column state data msg
+    -> Column globalState rowState data msg
 columnWithState input =
     Column
         { header = input.header
         , view = input.view
         , width = Nothing
-        , visible = \_ -> True
-        , order = \_ -> 0
+        , visible = Nothing
+        , order = Nothing
         , summary = Nothing
         }
 
@@ -249,14 +282,14 @@ withWidth :
     , min : Maybe Int
     , max : Maybe Int
     }
-    -> Column state data msg
-    -> Column state data msg
+    -> Column globalState rowState data msg
+    -> Column globalState rowState data msg
 withWidth width (Column col) =
     Column { col | width = Just width }
 
 
 {-| -}
-withSummary : (state -> List data -> Cell msg) -> Column state data msg -> Column state data msg
+withSummary : (globalState -> List data -> Cell msg) -> Column globalState rowState data msg -> Column globalState rowState data msg
 withSummary toSummaryCell (Column col) =
     Column
         { col
@@ -265,21 +298,21 @@ withSummary toSummaryCell (Column col) =
 
 
 {-| -}
-withVisibility : (state -> Bool) -> Column state data msg -> Column state data msg
+withVisibility : (globalState -> Bool) -> Column globalState rowState data msg -> Column globalState rowState data msg
 withVisibility toVisibility (Column col) =
-    Column { col | visible = toVisibility }
+    Column { col | visible = Just toVisibility }
 
 
 {-| -}
-withOrder : (state -> Int) -> Column state data msg -> Column state data msg
+withOrder : (globalState -> Int) -> Column globalState rowState data msg -> Column globalState rowState data msg
 withOrder toOrder (Column col) =
-    Column { col | order = toOrder }
+    Column { col | order = Just toOrder }
 
 
 {-| -}
 view :
     List (Attribute msg)
-    -> Config () data msg
+    -> Config () () data msg
     -> List data
     -> Element msg
 view attrs config data =
@@ -289,8 +322,8 @@ view attrs config data =
 {-| -}
 viewWithState :
     List (Attribute msg)
-    -> Config state data msg
-    -> state
+    -> Config globalState rowState data msg
+    -> globalState
     -> List data
     -> Element msg
 viewWithState attrs config state data =
@@ -302,7 +335,10 @@ viewWithState attrs config state data =
                 config
 
         rows =
-            Ui.Lazy.lazy3 renderRows config state data
+            Ui.Lazy.lazy4 viewTableBody config cols state data
+
+        cols =
+            getColumns config state
     in
     Two.element Two.NodeAsTable
         Two.AsColumn
@@ -310,7 +346,7 @@ viewWithState attrs config state data =
             :: Two.attrIf config.scrollable
                 (Two.classWith Flag.overflow Style.classes.scrollbars)
             :: Two.style "grid-template-columns"
-                (gridTemplateColumns state config.columns "")
+                (gridTemplateColumns state cols "")
             :: Two.style "grid-auto-rows"
                 "minmax(min-content, max-content)"
             :: Ui.width Ui.fill
@@ -319,14 +355,14 @@ viewWithState attrs config state data =
         [ headerRow
         , rows
         , if List.any hasSummary config.columns then
-            Ui.Lazy.lazy3 renderSummary config state data
+            Ui.Lazy.lazy4 renderSummary config cols state data
 
           else
             Ui.none
         ]
 
 
-hasSummary : Column state data msg -> Bool
+hasSummary : Column globalState rowState data msg -> Bool
 hasSummary (Column col) =
     case col.summary of
         Nothing ->
@@ -336,21 +372,17 @@ hasSummary (Column col) =
             True
 
 
-gridTemplateColumns : state -> List (Column state data msg) -> String -> String
+gridTemplateColumns : globalState -> List (Column globalState rowState data msg) -> String -> String
 gridTemplateColumns state cols str =
     case cols of
         [] ->
             str
 
         (Column col) :: remain ->
-            if not (col.visible state) then
-                gridTemplateColumns state remain str
-
-            else
-                gridTemplateColumns state remain (str ++ " " ++ columnToGridTemplate col)
+            gridTemplateColumns state remain (str ++ " " ++ columnToGridTemplate col)
 
 
-columnToGridTemplate : ColumnDetails state data msg -> String
+columnToGridTemplate : ColumnDetails globalState rowState data msg -> String
 columnToGridTemplate col =
     case col.width of
         Nothing ->
@@ -399,8 +431,12 @@ columnToGridTemplate col =
                                 ++ ")"
 
 
-renderHeader : state -> Config state data msg -> Element msg
+renderHeader : globalState -> Config globalState rowState data msg -> Element msg
 renderHeader state config =
+    let
+        cols =
+            getColumns config state
+    in
     Two.element Two.NodeAsTableHead
         Two.AsRow
         [ Two.style "display" "contents" ]
@@ -408,7 +444,7 @@ renderHeader state config =
             Two.AsRow
             [ Two.style "display" "contents"
             ]
-            (case List.sortBy (\(Column col) -> col.order state) config.columns of
+            (case cols of
                 [] ->
                     []
 
@@ -421,7 +457,7 @@ renderHeader state config =
         ]
 
 
-renderColumnHeader : Config state data msg -> state -> Bool -> Column state data msg -> Element msg
+renderColumnHeader : Config globalState rowState data msg -> globalState -> Bool -> Column globalState rowState data msg -> Element msg
 renderColumnHeader cfg state isFirstColumn (Column col) =
     let
         { attrs, child } =
@@ -439,9 +475,6 @@ renderColumnHeader cfg state isFirstColumn (Column col) =
                 (Two.class
                     Style.classes.stickyTop
                 )
-            :: Two.attrIf
-                (not (col.visible state))
-                (Two.style "display" "none")
             :: Two.attrIf
                 stickyColumn
                 (Two.class
@@ -463,8 +496,45 @@ renderColumnHeader cfg state isFirstColumn (Column col) =
         [ child ]
 
 
-renderRows : Config state data msg -> state -> List data -> Element msg
-renderRows config state data =
+hasColumnMods : Column globalState rowState data msg -> Bool
+hasColumnMods (Column col) =
+    col.visible /= Nothing || col.order /= Nothing
+
+
+getColumns : Config globalState rowState data msg -> globalState -> List (Column globalState rowState data msg)
+getColumns config state =
+    if List.any hasColumnMods config.columns then
+        config.columns
+            |> List.filter
+                (\(Column col) ->
+                    case col.visible of
+                        Nothing ->
+                            True
+
+                        Just isVisible ->
+                            isVisible state
+                )
+            |> List.sortBy
+                (\(Column col) ->
+                    case col.order of
+                        Nothing ->
+                            0
+
+                        Just getOrder ->
+                            getOrder state
+                )
+
+    else
+        config.columns
+
+
+viewTableBody :
+    Config globalState rowState data msg
+    -> List (Column globalState rowState data msg)
+    -> globalState
+    -> List data
+    -> Element msg
+viewTableBody config cols state data =
     let
         sorted =
             case config.sort of
@@ -478,44 +548,76 @@ renderRows config state data =
         Two.AsRow
         [ Two.style "display" "contents" ]
         (List.indexedMap
-            (renderRowWithKey config state)
+            (viewRowWithKey config cols state)
             sorted
         )
 
 
-renderRowWithKey : Config state data msg -> state -> Int -> data -> ( String, Element msg )
-renderRowWithKey config state index row =
+viewRowWithKey :
+    Config globalState rowState data msg
+    -> List (Column globalState rowState data msg)
+    -> globalState
+    -> Int
+    -> data
+    -> ( String, Element msg )
+viewRowWithKey config cols state index row =
+    let
+        rowState =
+            case config.toRowState of
+                Nothing ->
+                    Nothing
+
+                Just toState ->
+                    toState state index
+    in
     ( config.toKey row
-    , Ui.Lazy.lazy4 renderRow config state row index
+    , Ui.Lazy.lazy5 viewRow config cols rowState row index
     )
 
 
-renderRow : Config state data msg -> state -> data -> Int -> Element msg
-renderRow config state row rowIndex =
+viewRow :
+    Config globalState rowState data msg
+    -> List (Column globalState rowState data msg)
+    -> Maybe rowState
+    -> data
+    -> Int
+    -> Element msg
+viewRow config cols state row rowIndex =
+    let
+        rowAttrs =
+            case config.toRowAttrs of
+                Nothing ->
+                    []
+
+                Just toAttrs ->
+                    toAttrs state row
+    in
     Two.element Two.NodeAsTableRow
         Two.AsRow
-        [ Two.style "display" "contents"
-        , case config.onRowClick of
-            Nothing ->
-                Two.noAttr
+        (Two.style "display" "contents"
+            :: (case config.onRowClick of
+                    Nothing ->
+                        Two.noAttr
 
-            Just onClick ->
-                Ui.Events.onClick (onClick row)
-        ]
-        (case List.sortBy (\(Column col) -> col.order state) config.columns of
+                    Just onClick ->
+                        Ui.Events.onClick (onClick row)
+               )
+            :: rowAttrs
+        )
+        (case cols of
             [] ->
                 []
 
             first :: remaining ->
-                renderColumn config state rowIndex row True first
+                Ui.Lazy.lazy6 viewCell config state rowIndex row True first
                     :: List.map
-                        (renderColumn config state rowIndex row False)
+                        (Ui.Lazy.lazy6 viewCell config state rowIndex row False)
                         remaining
         )
 
 
-renderColumn : Config state data msg -> state -> Int -> data -> Bool -> Column state data msg -> Element msg
-renderColumn config state rowIndex row isFirstColumn (Column col) =
+viewCell : Config globalState rowState data msg -> Maybe rowState -> Int -> data -> Bool -> Column globalState rowState data msg -> Element msg
+viewCell config state rowIndex row isFirstColumn (Column col) =
     let
         { attrs, child } =
             col.view rowIndex state row
@@ -536,9 +638,6 @@ renderColumn config state rowIndex row isFirstColumn (Column col) =
                     Style.classes.stickyLeft
                 )
             :: Two.attrIf
-                (not (col.visible state))
-                (Two.style "display" "none")
-            :: Two.attrIf
                 (config.stickFirstColumn && isFirstColumn)
                 (Ui.background (Ui.rgb 255 255 255))
             :: Two.attrIf
@@ -549,8 +648,13 @@ renderColumn config state rowIndex row isFirstColumn (Column col) =
         [ child ]
 
 
-renderSummary : Config state data msg -> state -> List data -> Element msg
-renderSummary config state rows =
+renderSummary :
+    Config globalState rowState data msg
+    -> List (Column globalState rowState data msg)
+    -> globalState
+    -> List data
+    -> Element msg
+renderSummary config cols state rows =
     Two.element Two.NodeAsTableFoot
         Two.AsRow
         [ Two.style "display" "contents" ]
@@ -558,7 +662,7 @@ renderSummary config state rows =
             Two.AsRow
             [ Two.style "display" "contents"
             ]
-            (case List.sortBy (\(Column col) -> col.order state) config.columns of
+            (case cols of
                 [] ->
                     []
 
@@ -571,7 +675,7 @@ renderSummary config state rows =
         ]
 
 
-renderSummaryColumn : Config state data msg -> state -> List data -> Bool -> Column state data msg -> Element msg
+renderSummaryColumn : Config globalState rowState data msg -> globalState -> List data -> Bool -> Column globalState rowState data msg -> Element msg
 renderSummaryColumn config state rows isFirstColumn (Column col) =
     let
         { attrs, child } =
@@ -593,9 +697,6 @@ renderSummaryColumn config state rows isFirstColumn (Column col) =
                 (Two.class
                     Style.classes.stickyBottom
                 )
-            :: Two.attrIf
-                (not (col.visible state))
-                (Two.style "display" "none")
             :: Two.attrIf
                 (config.stickFirstColumn && isFirstColumn)
                 (Two.class
