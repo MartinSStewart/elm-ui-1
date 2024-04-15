@@ -388,6 +388,7 @@ type Attr msg
 
 type Node
     = NodeAsDiv
+    | NodeAsSpan
     | NodeAsLink
     | NodeAsParagraph
     | NodeAsButton
@@ -1006,6 +1007,9 @@ element node layout attrs children =
                     NodeAsDiv ->
                         Html.div styleAttrs finalChildren
 
+                    NodeAsSpan ->
+                        Html.span styleAttrs finalChildren
+
                     NodeAsLink ->
                         Html.a styleAttrs finalChildren
 
@@ -1194,6 +1198,9 @@ elementKeyed node layout attrs children =
                 case node of
                     NodeAsDiv ->
                         Html.Keyed.node "div" styleAttrs finalChildren
+
+                    NodeAsSpan ->
+                        Html.Keyed.node "span" styleAttrs finalChildren
 
                     NodeAsLink ->
                         Html.Keyed.node "a" styleAttrs finalChildren

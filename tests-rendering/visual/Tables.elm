@@ -6,6 +6,7 @@ import Browser
 import Html exposing (Html)
 import Theme
 import Ui
+import Ui.Events
 import Ui.Font
 import Ui.Table
 
@@ -22,8 +23,22 @@ type alias Model =
     {}
 
 
+type Msg
+    = Clicked
+    | Hovered
+    | Exited
+
+
 update msg model =
-    model
+    case Debug.log "MSG" msg of
+        Clicked ->
+            model
+
+        Hovered ->
+            model
+
+        Exited ->
+            model
 
 
 myTable =
@@ -99,7 +114,11 @@ myTable =
             (\maybeRowState row ->
                 case maybeRowState of
                     Just _ ->
-                        [ Ui.background (Ui.rgb 255 0 0) ]
+                        [ Ui.background (Ui.rgb 255 0 0)
+                        , Ui.Events.onMouseEnter Hovered
+                        , Ui.Events.onMouseLeave Exited
+                        , Ui.Events.onClick Clicked
+                        ]
 
                     Nothing ->
                         []
@@ -148,7 +167,7 @@ sorted =
     }
 
 
-view : Model -> Html msg
+view : Model -> Html Msg
 view mode =
     Ui.layout []
         (Ui.column

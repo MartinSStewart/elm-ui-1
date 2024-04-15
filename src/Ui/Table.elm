@@ -2,7 +2,7 @@ module Ui.Table exposing
     ( Column, column, Cell, cell
     , header, withWidth
     , view, Config, columns
-    , withRowKey, onRowClick, withRowAttributes
+    , withRowKey, withRowAttributes
     , withScrollable
     , viewWithState
     , columnWithState, withVisibility, withOrder, withSummary
@@ -45,7 +45,7 @@ module Ui.Table exposing
 
 @docs view, Config, columns
 
-@docs withRowKey, onRowClick, withRowAttributes
+@docs withRowKey, withRowAttributes
 
 @docs withScrollable
 
@@ -79,7 +79,6 @@ type alias Config globalState rowState data msg =
 
     -- Row config
     , toRowState : Maybe (globalState -> Int -> data -> Maybe rowState)
-    , onRowClick : Maybe (data -> msg)
     , toRowAttrs : Maybe (Maybe rowState -> data -> List (Attribute msg))
     , stickHeader : Bool
     , stickRow : data -> Bool
@@ -96,7 +95,6 @@ columns cols =
     { toKey = \_ -> "keyed"
     , columns = cols
     , toRowState = Nothing
-    , onRowClick = Nothing
     , toRowAttrs = Nothing
     , stickHeader = False
     , stickRow = \_ -> False
@@ -123,15 +121,6 @@ withRowState toState cfg =
 
 
 {-| -}
-onRowClick :
-    (data -> msg)
-    -> Config globalState rowState data msg
-    -> Config globalState rowState data msg
-onRowClick onClick cfg =
-    { cfg | onRowClick = Just onClick }
-
-
-{-| -}
 withRowAttributes :
     (Maybe rowState -> data -> List (Attribute msg))
     -> Config globalState rowState data msg
@@ -141,7 +130,10 @@ withRowAttributes toRowAttrs cfg =
 
 
 {-| -}
-withSort : (globalState -> List data -> List data) -> Config globalState rowState data msg -> Config globalState rowState data msg
+withSort :
+    (globalState -> List data -> List data)
+    -> Config globalState rowState data msg
+    -> Config globalState rowState data msg
 withSort sort cfg =
     { cfg | sort = Just sort }
 
@@ -167,13 +159,14 @@ type Column globalState rowState data msg
 
 type alias ColumnDetails globalState rowState data msg =
     { header : globalState -> Cell msg
+    , columnSpan : Int
     , width :
         Maybe
             { fill : Bool
             , min : Maybe Int
             , max : Maybe Int
             }
-    , view : Int -> Maybe rowState -> data -> Cell msg
+    , view : Int -> Maybe rowState -> data -> List (Cell msg)
     , visible : Maybe (globalState -> Bool)
     , order : Maybe (globalState -> Int)
     , summary : Maybe (globalState -> List data -> Cell msg)
@@ -251,7 +244,8 @@ column :
 column input =
     Column
         { header = \_ -> input.header
-        , view = \_ _ data -> input.view data
+        , view = \_ _ data -> [ input.view data ]
+        , columnSpan = 1
         , width = Nothing
         , visible = Nothing
         , order = Nothing
@@ -268,7 +262,34 @@ columnWithState :
 columnWithState input =
     Column
         { header = input.header
-        , view = input.view
+        , view = \index state data -> [ input.view index state data ]
+        , columnSpan = 1
+        , width = Nothing
+        , visible = Nothing
+        , order = Nothing
+        , summary = Nothing
+        }
+
+
+{-| -}
+columnWithAlignment :
+    { header : globalState -> Cell msg
+    , view : Int -> Maybe rowState -> data -> ( Cell msg, Cell msg )
+    }
+    -> Column globalState rowState data msg
+columnWithAlignment input =
+    Column
+        { header = input.header
+        , view =
+            \index state data ->
+                let
+                    ( one, two ) =
+                        input.view index state data
+                in
+                [ one
+                , two
+                ]
+        , columnSpan = 2
         , width = Nothing
         , visible = Nothing
         , order = Nothing
@@ -666,21 +687,43 @@ viewRow :
     -> data
     -> Int
     -> Element msg
-viewRow config cols state row rowIndex =
+viewRow config cols rowState row rowIndex =
+    let
+        attrs =
+            case config.toRowAttrs of
+                Nothing ->
+                    []
+
+                Just toAttrs ->
+                    toAttrs rowState row
+
+        ( _, cells ) =
+            List.foldl
+                (viewCellHelper config rowState rowIndex row)
+                ( 0, [] )
+                cols
+    in
     Two.element Two.NodeAsTableRow
         Two.AsRow
-        [ Two.style "display" "contents"
-        , case config.onRowClick of
-            Nothing ->
-                Two.noAttr
-
-            Just onClick ->
-                Ui.Events.onClick (onClick row)
-        ]
-        (List.indexedMap
-            (Ui.Lazy.lazy6 viewCell config state rowIndex row)
-            cols
+        (Two.style "display" "contents"
+            :: attrs
         )
+        (List.reverse cells)
+
+
+viewCellHelper :
+    Config globalState rowState data msg
+    -> Maybe rowState
+    -> Int
+    -> data
+    -> Column globalState rowState data msg
+    -> ( Int, List (Element msg) )
+    -> ( Int, List (Element msg) )
+viewCellHelper config state rowIndex row ((Column colData) as col) ( columnIndex, existingCols ) =
+    ( columnIndex + colData.columnSpan
+    , Ui.Lazy.lazy6 viewCell config state rowIndex row col columnIndex
+        :: existingCols
+    )
 
 
 viewCell :
@@ -688,19 +731,50 @@ viewCell :
     -> Maybe rowState
     -> Int
     -> data
-    -> Int
     -> Column globalState rowState data msg
+    -> Int
     -> Element msg
-viewCell config state rowIndex row negativeIndex (Column col) =
+viewCell config state rowIndex row (Column col) columnIndexZero =
     let
         columnIndex =
-            negativeIndex + 1
+            columnIndexZero + 1
 
         isFirstColumn =
             columnIndex == 1
+    in
+    case col.view rowIndex state row of
+        [] ->
+            Two.element Two.NodeAsTableD
+                Two.AsEl
+                [ Two.style "display" "contents" ]
+                []
 
-        { attrs, children } =
-            col.view rowIndex state row
+        [ single ] ->
+            viewCellInner config Two.NodeAsTableD rowIndex columnIndex single
+
+        cells ->
+            Two.element Two.NodeAsTableD
+                Two.AsEl
+                [ Two.style "display" "contents" ]
+                (List.indexedMap
+                    (\i data ->
+                        viewCellInner config Two.NodeAsSpan rowIndex (columnIndex + i) data
+                    )
+                    cells
+                )
+
+
+viewCellInner :
+    Config globalState rowState data msg
+    -> Two.Node
+    -> Int
+    -> Int
+    -> Cell msg
+    -> Element msg
+viewCellInner config nodeType rowIndex columnIndex { attrs, children } =
+    let
+        isFirstColumn =
+            columnIndex == 1
 
         padding =
             if rowIndex == 0 then
@@ -709,11 +783,10 @@ viewCell config state rowIndex row negativeIndex (Column col) =
             else
                 default.padding
     in
-    Two.element Two.NodeAsTableD
+    Two.element nodeType
         Two.AsEl
         (padding
             :: toGridCoords (rowIndex + 2) columnIndex (rowIndex + 3) (columnIndex + 1)
-            :: Ui.id "pls"
             :: Two.attrIf
                 (config.stickFirstColumn && isFirstColumn)
                 (Two.class
