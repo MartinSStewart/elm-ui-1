@@ -41,6 +41,43 @@ update msg model =
             model
 
 
+alignedDollars name getFloat =
+    Ui.Table.columnWithAlignment
+        { header = \_ -> Ui.Table.header name
+        , widths = ( Ui.Table.defaultWidth, Ui.Table.defaultWidth )
+        , view =
+            \i rowState row ->
+                case String.split "." (String.fromFloat (getFloat row)) of
+                    [] ->
+                        ( Ui.Table.cell [ Ui.Font.alignRight ]
+                            (Ui.text "0")
+                        , Ui.Table.cell []
+                            (Ui.text ".00")
+                        )
+
+                    [ dollars ] ->
+                        ( Ui.Table.cell [ Ui.Font.alignRight ]
+                            (Ui.text dollars)
+                        , Ui.Table.cell []
+                            (Ui.text ".")
+                        )
+
+                    [ dollars, cents ] ->
+                        ( Ui.Table.cell [ Ui.Font.alignRight ]
+                            (Ui.text dollars)
+                        , Ui.Table.cell []
+                            (Ui.text ("." ++ cents))
+                        )
+
+                    _ ->
+                        ( Ui.Table.cell [ Ui.Font.alignRight ]
+                            (Ui.text "0")
+                        , Ui.Table.cell []
+                            (Ui.text ".00")
+                        )
+        }
+
+
 myTable =
     Ui.Table.columns
         [ Ui.Table.column
@@ -61,6 +98,7 @@ myTable =
                 (\{ visibleOccupation } ->
                     visibleOccupation
                 )
+        , alignedDollars "Salary, aligned" .salary
         , Ui.Table.column
             { header =
                 Ui.Table.cell
@@ -76,7 +114,7 @@ myTable =
             , view =
                 \row ->
                     Ui.Table.cell [ Ui.Font.alignRight ]
-                        (Ui.text (String.fromInt row.salary))
+                        (Ui.text (String.fromFloat row.salary))
             }
             |> Ui.Table.withWidth
                 { fill = True
@@ -89,7 +127,7 @@ myTable =
                         total =
                             List.sum (List.map .salary rows)
                     in
-                    ("Total: " ++ String.fromInt total)
+                    ("Total: " ++ String.fromFloat total)
                         |> Ui.text
                         |> Ui.Table.cell [ Ui.Font.alignRight ]
                 )
@@ -171,7 +209,7 @@ view : Model -> Html Msg
 view mode =
     Ui.layout []
         (Ui.column
-            [ Ui.width (Ui.px 800)
+            [ Ui.width (Ui.px 1200)
             , Ui.centerX
             , Ui.padding 100
             , Ui.spacing 100

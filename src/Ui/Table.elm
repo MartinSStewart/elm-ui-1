@@ -1,11 +1,13 @@
 module Ui.Table exposing
     ( Column, column, Cell, cell
-    , header, withWidth
+    , header
+    , Width, withWidth, defaultWidth
     , view, Config, columns
     , withRowKey, withRowAttributes
     , withScrollable
     , viewWithState
     , columnWithState, withVisibility, withOrder, withSummary
+    , columnWithAlignment, columnWithAlignment3
     , withRowState
     , withSort
     )
@@ -38,7 +40,9 @@ module Ui.Table exposing
 
 @docs Column, column, Cell, cell
 
-@docs header, withWidth
+@docs header
+
+@docs Width, withWidth, defaultWidth
 
 
 ## Table Configuration
@@ -55,6 +59,8 @@ module Ui.Table exposing
 @docs viewWithState
 
 @docs columnWithState, withVisibility, withOrder, withSummary
+
+@docs columnWithAlignment, columnWithAlignment3
 
 @docs withRowState
 
@@ -160,8 +166,8 @@ type Column globalState rowState data msg
 type alias ColumnDetails globalState rowState data msg =
     { header : globalState -> Cell msg
     , columnSpan : Int
-    , width :
-        Maybe
+    , widths :
+        List
             { fill : Bool
             , min : Maybe Int
             , max : Maybe Int
@@ -197,7 +203,7 @@ default =
         Ui.paddingXY 16 8
     , paddingFirstRow =
         Ui.paddingWith
-            { top = 16
+            { top = 8
             , left = 16
             , right = 16
             , bottom = 8
@@ -235,6 +241,16 @@ header str =
         (Ui.text str)
 
 
+{-| A default width for a column which shrinks to it's contents and has no min or max.
+-}
+defaultWidth : Width
+defaultWidth =
+    { fill = False
+    , min = Nothing
+    , max = Nothing
+    }
+
+
 {-| -}
 column :
     { header : Cell msg
@@ -246,7 +262,7 @@ column input =
         { header = \_ -> input.header
         , view = \_ _ data -> [ input.view data ]
         , columnSpan = 1
-        , width = Nothing
+        , widths = [ defaultWidth ]
         , visible = Nothing
         , order = Nothing
         , summary = Nothing
@@ -264,7 +280,7 @@ columnWithState input =
         { header = input.header
         , view = \index state data -> [ input.view index state data ]
         , columnSpan = 1
-        , width = Nothing
+        , widths = [ defaultWidth ]
         , visible = Nothing
         , order = Nothing
         , summary = Nothing
@@ -274,6 +290,7 @@ columnWithState input =
 {-| -}
 columnWithAlignment :
     { header : globalState -> Cell msg
+    , widths : ( Width, Width )
     , view : Int -> Maybe rowState -> data -> ( Cell msg, Cell msg )
     }
     -> Column globalState rowState data msg
@@ -290,7 +307,12 @@ columnWithAlignment input =
                 , two
                 ]
         , columnSpan = 2
-        , width = Nothing
+        , widths =
+            let
+                ( w1, w2 ) =
+                    input.widths
+            in
+            [ w1, w2 ]
         , visible = Nothing
         , order = Nothing
         , summary = Nothing
@@ -298,15 +320,50 @@ columnWithAlignment input =
 
 
 {-| -}
-withWidth :
+type alias Width =
     { fill : Bool
     , min : Maybe Int
     , max : Maybe Int
     }
+
+
+{-| -}
+columnWithAlignment3 :
+    { header : globalState -> Cell msg
+    , widths : ( Width, Width, Width )
+    , view : Int -> Maybe rowState -> data -> ( Cell msg, Cell msg, Cell msg )
+    }
     -> Column globalState rowState data msg
-    -> Column globalState rowState data msg
+columnWithAlignment3 input =
+    Column
+        { header = input.header
+        , view =
+            \index state data ->
+                let
+                    ( one, two, three ) =
+                        input.view index state data
+                in
+                [ one
+                , two
+                , three
+                ]
+        , columnSpan = 3
+        , widths =
+            let
+                ( w1, w2, w3 ) =
+                    input.widths
+            in
+            [ w1, w2, w3 ]
+        , visible = Nothing
+        , order = Nothing
+        , summary = Nothing
+        }
+
+
+{-| -}
+withWidth : Width -> Column globalState rowState data msg -> Column globalState rowState data msg
 withWidth width (Column col) =
-    Column { col | width = Just width }
+    Column { col | widths = List.map (\_ -> width) col.widths }
 
 
 {-| -}
@@ -403,53 +460,67 @@ gridTemplateColumns state cols str =
             gridTemplateColumns state remain (str ++ " " ++ columnToGridTemplate col)
 
 
+renderWidth : Width -> String
+renderWidth w =
+    case w.min of
+        Nothing ->
+            case w.max of
+                Nothing ->
+                    if w.fill then
+                        "1fr"
+
+                    else
+                        "minmax(min-content, max-content)"
+
+                Just max ->
+                    if w.fill then
+                        "minmax(1fr, "
+                            ++ String.fromInt max
+                            ++ "px)"
+
+                    else
+                        "minmax(min-content, "
+                            ++ String.fromInt max
+                            ++ "px)"
+
+        Just min ->
+            case w.max of
+                Nothing ->
+                    if w.fill then
+                        "minmax("
+                            ++ String.fromInt min
+                            ++ "px , 1fr)"
+
+                    else
+                        "minmax("
+                            ++ String.fromInt min
+                            ++ "px , max-content)"
+
+                Just max ->
+                    "minmax("
+                        ++ String.fromInt min
+                        ++ "px , "
+                        ++ String.fromInt max
+                        ++ ")"
+
+
 columnToGridTemplate : ColumnDetails globalState rowState data msg -> String
 columnToGridTemplate col =
-    case col.width of
-        Nothing ->
-            "minmax(min-content, max-content)"
+    renderWidthList col.widths ""
 
-        Just w ->
-            case w.min of
-                Nothing ->
-                    case w.max of
-                        Nothing ->
-                            if w.fill then
-                                "1fr"
 
-                            else
-                                "minmax(min-content, max-content)"
+renderWidthList : List Width -> String -> String
+renderWidthList width str =
+    case width of
+        [] ->
+            str
 
-                        Just max ->
-                            if w.fill then
-                                "minmax(1fr, "
-                                    ++ String.fromInt max
-                                    ++ "px)"
+        w :: remain ->
+            if str == "" then
+                renderWidthList remain (renderWidth w)
 
-                            else
-                                "minmax(min-content, "
-                                    ++ String.fromInt max
-                                    ++ "px)"
-
-                Just min ->
-                    case w.max of
-                        Nothing ->
-                            if w.fill then
-                                "minmax("
-                                    ++ String.fromInt min
-                                    ++ "px , 1fr)"
-
-                            else
-                                "minmax("
-                                    ++ String.fromInt min
-                                    ++ "px , max-content)"
-
-                        Just max ->
-                            "minmax("
-                                ++ String.fromInt min
-                                ++ "px , "
-                                ++ String.fromInt max
-                                ++ ")"
+            else
+                renderWidthList remain (str ++ " " ++ renderWidth w)
 
 
 viewHeader : globalState -> Config globalState rowState data msg -> Element msg
@@ -457,22 +528,45 @@ viewHeader state config =
     let
         cols =
             getColumns config state
+
+        ( _, cells ) =
+            List.foldl
+                (viewHeaderHelper config state)
+                ( 0, [] )
+                cols
     in
     Two.element Two.NodeAsTableHead
         Two.AsRow
         [ Two.style "display" "contents" ]
-        [ Two.element Two.NodeAsTableRow
+        [ Two.elementKeyed Two.NodeAsTableRow
             Two.AsRow
             [ Two.style "display" "contents"
             ]
-            (List.indexedMap
-                (viewHeaderCell config state)
-                cols
-            )
+            (List.reverse cells)
         ]
 
 
-viewHeaderCell : Config globalState rowState data msg -> globalState -> Int -> Column globalState rowState data msg -> Element msg
+viewHeaderHelper :
+    Config globalState rowState data msg
+    -> globalState
+    -> Column globalState rowState data msg
+    -> ( Int, List ( String, Element msg ) )
+    -> ( Int, List ( String, Element msg ) )
+viewHeaderHelper config state ((Column colData) as col) ( columnIndex, existingCols ) =
+    ( columnIndex + colData.columnSpan
+    , ( String.fromInt columnIndex
+      , Ui.Lazy.lazy4 viewHeaderCell config state columnIndex col
+      )
+        :: existingCols
+    )
+
+
+viewHeaderCell :
+    Config globalState rowState data msg
+    -> globalState
+    -> Int
+    -> Column globalState rowState data msg
+    -> Element msg
 viewHeaderCell cfg state negativeIndex (Column col) =
     let
         columnIndex =
@@ -490,7 +584,7 @@ viewHeaderCell cfg state negativeIndex (Column col) =
     Two.element Two.NodeAsTableHeaderCell
         Two.AsEl
         (default.padding
-            :: toGridCoords 1 columnIndex 2 (columnIndex + 1)
+            :: toGridCoords 1 columnIndex 2 (columnIndex + col.columnSpan)
             :: default.fontAlignment
             :: Two.attrIf
                 cfg.stickHeader
@@ -752,7 +846,7 @@ viewCell config state rowIndex row (Column col) columnIndexZero =
                 []
 
         [ single ] ->
-            viewCellInner config Two.NodeAsTableD rowIndex columnIndex single
+            viewCellInner config Two.NodeAsTableD rowIndex columnIndex 0 col.columnSpan single
 
         cells ->
             Two.element Two.NodeAsTableD
@@ -760,7 +854,7 @@ viewCell config state rowIndex row (Column col) columnIndexZero =
                 [ Two.style "display" "contents" ]
                 (List.indexedMap
                     (\i data ->
-                        viewCellInner config Two.NodeAsSpan rowIndex (columnIndex + i) data
+                        viewCellInner config Two.NodeAsSpan rowIndex (columnIndex + i) i col.columnSpan data
                     )
                     cells
                 )
@@ -771,19 +865,41 @@ viewCellInner :
     -> Two.Node
     -> Int
     -> Int
+    -> Int
+    -> Int
     -> Cell msg
     -> Element msg
-viewCellInner config nodeType rowIndex columnIndex { attrs, children } =
+viewCellInner config nodeType rowIndex columnIndex cellIndex cellCount { attrs, children } =
     let
         isFirstColumn =
             columnIndex == 1
 
         padding =
-            if rowIndex == 0 then
-                default.paddingFirstRow
+            if cellCount == 1 then
+                if rowIndex == 0 then
+                    default.paddingFirstRow
+
+                else
+                    default.padding
+
+            else if cellIndex == 0 then
+                Ui.paddingWith
+                    { top = 8
+                    , left = 16
+                    , right = 0
+                    , bottom = 8
+                    }
+
+            else if cellIndex == cellCount - 1 then
+                Ui.paddingWith
+                    { top = 8
+                    , left = 0
+                    , right = 16
+                    , bottom = 8
+                    }
 
             else
-                default.padding
+                Ui.paddingXY 0 8
     in
     Two.element nodeType
         Two.AsEl
@@ -815,19 +931,39 @@ viewSummary config cols state rows =
     let
         rowCount =
             List.length rows
+
+        ( _, cells ) =
+            List.foldl
+                (viewSummaryHelper config state rows rowCount)
+                ( 1, [] )
+                cols
     in
     Two.element Two.NodeAsTableFoot
         Two.AsRow
         [ Two.style "display" "contents" ]
-        [ Two.element Two.NodeAsTableRow
+        [ Two.elementKeyed Two.NodeAsTableRow
             Two.AsRow
             [ Two.style "display" "contents"
             ]
-            (List.indexedMap
-                (Ui.Lazy.lazy6 viewSummaryColumn config state rows rowCount)
-                cols
-            )
+            (List.reverse cells)
         ]
+
+
+viewSummaryHelper :
+    Config globalState rowState data msg
+    -> globalState
+    -> List data
+    -> Int
+    -> Column globalState rowState data msg
+    -> ( Int, List ( String, Element msg ) )
+    -> ( Int, List ( String, Element msg ) )
+viewSummaryHelper config state rows rowCount ((Column colData) as col) ( columnIndex, existingCols ) =
+    ( columnIndex + colData.columnSpan
+    , ( String.fromInt columnIndex
+      , Ui.Lazy.lazy6 viewSummaryColumn config state rows rowCount columnIndex col
+      )
+        :: existingCols
+    )
 
 
 viewSummaryColumn :
@@ -838,11 +974,8 @@ viewSummaryColumn :
     -> Int
     -> Column globalState rowState data msg
     -> Element msg
-viewSummaryColumn config state rows rowCount zeroIndex (Column col) =
+viewSummaryColumn config state rows rowCount columnIndex (Column col) =
     let
-        columnIndex =
-            zeroIndex + 1
-
         { attrs, children } =
             case col.summary of
                 Nothing ->
@@ -860,7 +993,7 @@ viewSummaryColumn config state rows rowCount zeroIndex (Column col) =
     Two.element Two.NodeAsTableD
         Two.AsEl
         (padding
-            :: toGridCoords (rowCount + 2) columnIndex (rowCount + 3) (columnIndex + 1)
+            :: toGridCoords (rowCount + 2) columnIndex (rowCount + 3) (columnIndex + col.columnSpan)
             :: Two.attrIf
                 config.stickHeader
                 (Two.class
