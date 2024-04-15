@@ -703,7 +703,7 @@ viewRow config cols rowState row rowIndex =
                 ( 0, [] )
                 cols
     in
-    Two.element Two.NodeAsTableRow
+    Two.elementKeyed Two.NodeAsTableRow
         Two.AsRow
         (Two.style "display" "contents"
             :: attrs
@@ -717,11 +717,13 @@ viewCellHelper :
     -> Int
     -> data
     -> Column globalState rowState data msg
-    -> ( Int, List (Element msg) )
-    -> ( Int, List (Element msg) )
+    -> ( Int, List ( String, Element msg ) )
+    -> ( Int, List ( String, Element msg ) )
 viewCellHelper config state rowIndex row ((Column colData) as col) ( columnIndex, existingCols ) =
     ( columnIndex + colData.columnSpan
-    , Ui.Lazy.lazy6 viewCell config state rowIndex row col columnIndex
+    , ( String.fromInt columnIndex
+      , Ui.Lazy.lazy6 viewCell config state rowIndex row col columnIndex
+      )
         :: existingCols
     )
 
@@ -746,7 +748,7 @@ viewCell config state rowIndex row (Column col) columnIndexZero =
         [] ->
             Two.element Two.NodeAsTableD
                 Two.AsEl
-                [ Two.style "display" "contents" ]
+                []
                 []
 
         [ single ] ->
