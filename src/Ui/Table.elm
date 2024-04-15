@@ -78,7 +78,7 @@ type alias Config globalState rowState data msg =
     , sort : Maybe (globalState -> List data -> List data)
 
     -- Row config
-    , toRowState : Maybe (globalState -> Int -> Maybe rowState)
+    , toRowState : Maybe (globalState -> Int -> data -> Maybe rowState)
     , onRowClick : Maybe (data -> msg)
     , toRowAttrs : Maybe (Maybe rowState -> data -> List (Attribute msg))
     , stickHeader : Bool
@@ -115,7 +115,7 @@ withRowKey toKey cfg =
 
 {-| -}
 withRowState :
-    (globalState -> Int -> Maybe rowState)
+    (globalState -> Int -> data -> Maybe rowState)
     -> Config globalState rowState data msg
     -> Config globalState rowState data msg
 withRowState toState cfg =
@@ -183,14 +183,14 @@ type alias ColumnDetails globalState rowState data msg =
 {-| -}
 type alias Cell msg =
     { attrs : List (Attribute msg)
-    , child : Element msg
+    , children : List (Element msg)
     }
 
 
 {-| -}
 cell : List (Attribute msg) -> Element msg -> Cell msg
-cell =
-    Cell
+cell attrs child =
+    Cell attrs [ child ]
 
 
 default :
@@ -330,7 +330,7 @@ viewWithState attrs config state data =
     let
         headerRow =
             Ui.Lazy.lazy2
-                renderHeader
+                viewHeader
                 state
                 config
 
@@ -355,7 +355,7 @@ viewWithState attrs config state data =
         [ headerRow
         , rows
         , if List.any hasSummary config.columns then
-            Ui.Lazy.lazy4 renderSummary config cols state data
+            Ui.Lazy.lazy4 viewSummary config cols state data
 
           else
             Ui.none
@@ -431,8 +431,8 @@ columnToGridTemplate col =
                                 ++ ")"
 
 
-renderHeader : globalState -> Config globalState rowState data msg -> Element msg
-renderHeader state config =
+viewHeader : globalState -> Config globalState rowState data msg -> Element msg
+viewHeader state config =
     let
         cols =
             getColumns config state
@@ -444,31 +444,32 @@ renderHeader state config =
             Two.AsRow
             [ Two.style "display" "contents"
             ]
-            (case cols of
-                [] ->
-                    []
-
-                first :: remaining ->
-                    renderColumnHeader config state True first
-                        :: List.map
-                            (renderColumnHeader config state False)
-                            remaining
+            (List.indexedMap
+                (viewHeaderCell config state)
+                cols
             )
         ]
 
 
-renderColumnHeader : Config globalState rowState data msg -> globalState -> Bool -> Column globalState rowState data msg -> Element msg
-renderColumnHeader cfg state isFirstColumn (Column col) =
+viewHeaderCell : Config globalState rowState data msg -> globalState -> Int -> Column globalState rowState data msg -> Element msg
+viewHeaderCell cfg state negativeIndex (Column col) =
     let
-        { attrs, child } =
+        columnIndex =
+            negativeIndex + 1
+
+        { attrs, children } =
             col.header state
 
         stickyColumn =
             cfg.stickFirstColumn && isFirstColumn
+
+        isFirstColumn =
+            columnIndex == 1
     in
     Two.element Two.NodeAsTableHeaderCell
         Two.AsEl
         (default.padding
+            :: toGridCoords 1 columnIndex 2 (columnIndex + 1)
             :: default.fontAlignment
             :: Two.attrIf
                 cfg.stickHeader
@@ -493,7 +494,7 @@ renderColumnHeader cfg state isFirstColumn (Column col) =
                 )
             :: attrs
         )
-        [ child ]
+        children
 
 
 hasColumnMods : Column globalState rowState data msg -> Bool
@@ -547,9 +548,92 @@ viewTableBody config cols state data =
     Two.elementKeyed Two.NodeAsTableBody
         Two.AsRow
         [ Two.style "display" "contents" ]
-        (List.indexedMap
-            (viewRowWithKey config cols state)
-            sorted
+        (( "active"
+         , Ui.Lazy.lazy3 viewActiveRows config state sorted
+         )
+            :: List.indexedMap
+                (viewRowWithKey config cols state)
+                sorted
+        )
+
+
+viewActiveRows :
+    Config globalState rowState data msg
+    -> globalState
+    -> List data
+    -> Element msg
+viewActiveRows config globalState rows =
+    let
+        ( _, selected ) =
+            List.foldl (viewActiveRow config globalState) ( 0, [] ) rows
+    in
+    case selected of
+        [] ->
+            Ui.none
+
+        _ ->
+            Two.element Two.NodeAsTableRow
+                Two.AsRow
+                [ Two.style "display" "contents" ]
+                selected
+
+
+viewActiveRow :
+    Config globalState rowState data msg
+    -> globalState
+    -> data
+    -> ( Int, List (Element msg) )
+    -> ( Int, List (Element msg) )
+viewActiveRow config globalState row ( rowZeroIndex, acc ) =
+    case config.toRowAttrs of
+        Nothing ->
+            ( rowZeroIndex + 1
+            , acc
+            )
+
+        Just toAttrs ->
+            let
+                maybeRowState =
+                    case config.toRowState of
+                        Nothing ->
+                            Nothing
+
+                        Just toState ->
+                            toState globalState rowZeroIndex row
+
+                rowAttrs =
+                    toAttrs maybeRowState row
+            in
+            case rowAttrs of
+                [] ->
+                    ( rowZeroIndex + 1
+                    , acc
+                    )
+
+                _ ->
+                    ( rowZeroIndex + 1
+                    , Ui.el
+                        (toGridCoords (rowZeroIndex + 2) 1 (rowZeroIndex + 3) -1
+                            :: rowAttrs
+                        )
+                        Ui.none
+                        :: acc
+                    )
+
+
+{-|
+
+    Given as: <row-start> / <column-start> / <row-end> / <column-end>
+    grid-area: 1 / col4-start / last-line / 6;
+
+-}
+toGridCoords : Int -> Int -> Int -> Int -> Ui.Attribute msg
+toGridCoords rowStart columnStart rowEnd columnEnd =
+    Two.style "grid-area"
+        ((String.fromInt rowStart ++ " / ")
+            ++ (String.fromInt columnStart ++ " / ")
+            ++ (String.fromInt rowEnd ++ " / ")
+            ++ String.fromInt columnEnd
         )
 
 
@@ -568,7 +652,7 @@ viewRowWithKey config cols state index row =
                     Nothing
 
                 Just toState ->
-                    toState state index
+                    toState state index row
     in
     ( config.toKey row
     , Ui.Lazy.lazy5 viewRow config cols rowState row index
@@ -583,43 +667,39 @@ viewRow :
     -> Int
     -> Element msg
 viewRow config cols state row rowIndex =
-    let
-        rowAttrs =
-            case config.toRowAttrs of
-                Nothing ->
-                    []
-
-                Just toAttrs ->
-                    toAttrs state row
-    in
     Two.element Two.NodeAsTableRow
         Two.AsRow
-        (Two.style "display" "contents"
-            :: (case config.onRowClick of
-                    Nothing ->
-                        Two.noAttr
+        [ Two.style "display" "contents"
+        , case config.onRowClick of
+            Nothing ->
+                Two.noAttr
 
-                    Just onClick ->
-                        Ui.Events.onClick (onClick row)
-               )
-            :: rowAttrs
-        )
-        (case cols of
-            [] ->
-                []
-
-            first :: remaining ->
-                Ui.Lazy.lazy6 viewCell config state rowIndex row True first
-                    :: List.map
-                        (Ui.Lazy.lazy6 viewCell config state rowIndex row False)
-                        remaining
+            Just onClick ->
+                Ui.Events.onClick (onClick row)
+        ]
+        (List.indexedMap
+            (Ui.Lazy.lazy6 viewCell config state rowIndex row)
+            cols
         )
 
 
-viewCell : Config globalState rowState data msg -> Maybe rowState -> Int -> data -> Bool -> Column globalState rowState data msg -> Element msg
-viewCell config state rowIndex row isFirstColumn (Column col) =
+viewCell :
+    Config globalState rowState data msg
+    -> Maybe rowState
+    -> Int
+    -> data
+    -> Int
+    -> Column globalState rowState data msg
+    -> Element msg
+viewCell config state rowIndex row negativeIndex (Column col) =
     let
-        { attrs, child } =
+        columnIndex =
+            negativeIndex + 1
+
+        isFirstColumn =
+            columnIndex == 1
+
+        { attrs, children } =
             col.view rowIndex state row
 
         padding =
@@ -632,6 +712,8 @@ viewCell config state rowIndex row isFirstColumn (Column col) =
     Two.element Two.NodeAsTableD
         Two.AsEl
         (padding
+            :: toGridCoords (rowIndex + 2) columnIndex (rowIndex + 3) (columnIndex + 1)
+            :: Ui.id "pls"
             :: Two.attrIf
                 (config.stickFirstColumn && isFirstColumn)
                 (Two.class
@@ -645,16 +727,20 @@ viewCell config state rowIndex row isFirstColumn (Column col) =
                 (Two.style "z-index" "1")
             :: attrs
         )
-        [ child ]
+        children
 
 
-renderSummary :
+viewSummary :
     Config globalState rowState data msg
     -> List (Column globalState rowState data msg)
     -> globalState
     -> List data
     -> Element msg
-renderSummary config cols state rows =
+viewSummary config cols state rows =
+    let
+        rowCount =
+            List.length rows
+    in
     Two.element Two.NodeAsTableFoot
         Two.AsRow
         [ Two.style "display" "contents" ]
@@ -662,23 +748,27 @@ renderSummary config cols state rows =
             Two.AsRow
             [ Two.style "display" "contents"
             ]
-            (case cols of
-                [] ->
-                    []
-
-                first :: remaining ->
-                    renderSummaryColumn config state rows True first
-                        :: List.map
-                            (renderSummaryColumn config state rows False)
-                            remaining
+            (List.indexedMap
+                (Ui.Lazy.lazy6 viewSummaryColumn config state rows rowCount)
+                cols
             )
         ]
 
 
-renderSummaryColumn : Config globalState rowState data msg -> globalState -> List data -> Bool -> Column globalState rowState data msg -> Element msg
-renderSummaryColumn config state rows isFirstColumn (Column col) =
+viewSummaryColumn :
+    Config globalState rowState data msg
+    -> globalState
+    -> List data
+    -> Int
+    -> Int
+    -> Column globalState rowState data msg
+    -> Element msg
+viewSummaryColumn config state rows rowCount zeroIndex (Column col) =
     let
-        { attrs, child } =
+        columnIndex =
+            zeroIndex + 1
+
+        { attrs, children } =
             case col.summary of
                 Nothing ->
                     cell [] Ui.none
@@ -688,10 +778,14 @@ renderSummaryColumn config state rows isFirstColumn (Column col) =
 
         padding =
             default.padding
+
+        isFirstColumn =
+            columnIndex == 1
     in
     Two.element Two.NodeAsTableD
         Two.AsEl
         (padding
+            :: toGridCoords (rowCount + 2) columnIndex (rowCount + 3) (columnIndex + 1)
             :: Two.attrIf
                 config.stickHeader
                 (Two.class
@@ -711,4 +805,4 @@ renderSummaryColumn config state rows isFirstColumn (Column col) =
             :: Ui.height Ui.fill
             :: attrs
         )
-        [ child ]
+        children

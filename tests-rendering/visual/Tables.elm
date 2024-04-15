@@ -2,11 +2,28 @@ module Tables exposing (main)
 
 {-| -}
 
+import Browser
 import Html exposing (Html)
 import Theme
 import Ui
 import Ui.Font
 import Ui.Table
+
+
+main =
+    Browser.sandbox
+        { init = {}
+        , view = view
+        , update = update
+        }
+
+
+type alias Model =
+    {}
+
+
+update msg model =
+    model
 
 
 myTable =
@@ -70,6 +87,23 @@ myTable =
                 else
                     rows
             )
+        |> Ui.Table.withRowState
+            (\global index row ->
+                if index == 0 || index == 10 then
+                    Just True
+
+                else
+                    Nothing
+            )
+        |> Ui.Table.withRowAttributes
+            (\maybeRowState row ->
+                case maybeRowState of
+                    Just _ ->
+                        [ Ui.background (Ui.rgb 255 0 0) ]
+
+                    Nothing ->
+                        []
+            )
 
 
 data =
@@ -114,8 +148,8 @@ sorted =
     }
 
 
-main : Html msg
-main =
+view : Model -> Html msg
+view mode =
     Ui.layout []
         (Ui.column
             [ Ui.width (Ui.px 800)
