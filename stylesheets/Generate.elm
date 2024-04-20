@@ -384,12 +384,12 @@ type Alignment
 
 
 alignments =
-    [ Top
+    [ CenterX
+    , CenterY
+    , Top
     , Bottom
     , Right
     , Left
-    , CenterX
-    , CenterY
     ]
 
 
