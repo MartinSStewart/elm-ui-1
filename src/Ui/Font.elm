@@ -7,9 +7,12 @@ module Ui.Font exposing
     , lineHeight, letterSpacing, wordSpacing
     , font
     , underline, strike, italic
-    , weight
-    , Weight, heavy, extraBold, bold, semiBold, medium, regular, light, extraLight, hairline
-    , variants, Variant, smallCaps, slashedZero, ligatures, ordinal, tabularNumbers, stackedFractions, diagonalFractions, swash, feature, indexed
+    , bold, weight
+    , variants, Variant
+    , smallCaps, ligatures
+    , slashedZero, ordinal
+    , tabularNumbers, stackedFractions, diagonalFractions
+    , swash, feature, indexed
     )
 
 {-|
@@ -45,14 +48,20 @@ module Ui.Font exposing
 
 ## Font Weight
 
-@docs weight
-
-@docs Weight, heavy, extraBold, bold, semiBold, medium, regular, light, extraLight, hairline
+@docs bold, weight
 
 
 ## Variants
 
-@docs variants, Variant, smallCaps, slashedZero, ligatures, ordinal, tabularNumbers, stackedFractions, diagonalFractions, swash, feature, indexed
+@docs variants, Variant
+
+@docs smallCaps, ligatures
+
+@docs slashedZero, ordinal
+
+@docs tabularNumbers, stackedFractions, diagonalFractions
+
+@docs swash, feature, indexed
 
 -}
 
@@ -153,7 +162,7 @@ font :
     { name : String
     , fallback : List Font
     , variants : List Variant
-    , weight : Weight
+    , weight : Int
     , size : Int
     , lineSpacing : Int
     , capitalSizeRatio : Float
@@ -209,9 +218,7 @@ font details =
                               )
                             , ( True
                               , ( "font-weight"
-                                , case details.weight of
-                                    Internal.Font.Weight wght ->
-                                        String.fromInt wght
+                                , String.fromInt details.weight
                                 )
                               )
                             , ( True
@@ -375,63 +382,15 @@ type alias Weight =
 
 
 {-| -}
-weight : Weight -> Attribute msg
-weight (Internal.Font.Weight i) =
+weight : Int -> Attribute msg
+weight i =
     Internal.style "font-weight" (String.fromInt i)
 
 
 {-| -}
-bold : Weight
+bold : Attribute msg
 bold =
-    Internal.Font.Weight 700
-
-
-{-| -}
-light : Weight
-light =
-    Internal.Font.Weight 300
-
-
-{-| -}
-hairline : Weight
-hairline =
-    Internal.Font.Weight 100
-
-
-{-| -}
-extraLight : Weight
-extraLight =
-    Internal.Font.Weight 200
-
-
-{-| -}
-regular : Weight
-regular =
-    Internal.Font.Weight 400
-
-
-{-| -}
-semiBold : Weight
-semiBold =
-    Internal.Font.Weight 600
-
-
-{-| -}
-medium : Weight
-medium =
-    Internal.Font.Weight 500
-
-
-{-| -}
-extraBold : Weight
-extraBold =
-    Internal.Font.Weight 800
-
-
-{-| -}
-heavy : Weight
-heavy =
-    Internal.Font.Weight 900
+    Internal.style "font-weight" "400"
 
 
 
