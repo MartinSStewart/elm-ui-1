@@ -57,7 +57,7 @@ linear :
 linear angle steps =
     case steps of
         [ single ] ->
-            color (Style.stepToColor single)
+            Style.Linear angle [ single, single ]
 
         _ ->
             Style.Linear angle steps
