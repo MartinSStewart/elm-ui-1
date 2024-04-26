@@ -19,10 +19,11 @@ module Ui exposing
     , move, Position, up, down, left, right
     , rotate, Angle, turns, radians
     , scale
-    , scrollable, clipped, clipWithEllipsis
+    , clip, clipX, clipY, clipWithEllipsis
+    , scrollable, scrollableAll, scrollableX
     , link, linkNewTab, download, downloadAs
     , image, imageWithFallback
-    , Color, rgb, rgba, palette
+    , Color, rgb, rgba
     , above, below, onRight, onLeft, inFront, behindContent
     , map, mapAttribute
     , html, htmlAttribute, node
@@ -157,13 +158,11 @@ Where there are two elements on the left, one on the right, and one in the cente
 @docs scale
 
 
-# Viewports
+# Scrolling and Clipping
 
-For scrolling element, we're going to borrow some terminology from 3D graphics just like the Elm [Browser](https://package.elm-lang.org/packages/elm/browser/latest/Browser-Dom) package does.
+@docs clip, clipX, clipY, clipWithEllipsis
 
-Essentially a `scrollable` is the window that you're looking through. If the content is larger than the scrollable, then scrollbars will appear.
-
-@docs scrollable, clipped, clipWithEllipsis
+@docs scrollable, scrollableAll, scrollableX
 
 
 # Links
@@ -583,23 +582,6 @@ imageWithFallback attrs img =
 
 
 {-| -}
-palette :
-    { background : Color
-    , border : Color
-    , font : Color
-    }
-    -> Attribute msg
-palette colors =
-    Two.style3
-        "background-color"
-        (Style.color colors.background)
-        "border-color"
-        (Style.color colors.border)
-        "color"
-        (Style.color colors.font)
-
-
-{-| -}
 border : Int -> Attribute msg
 border options =
     Two.styleWith Flag.skip
@@ -617,8 +599,7 @@ borderColor color =
 
 {-| -}
 borderGradient :
-    { width : Int
-    , gradient : Gradient
+    { gradient : Gradient
     , background : Gradient
     }
     -> Attribute msg
@@ -631,8 +612,8 @@ borderGradient options =
             ++ Style.toCssGradient options.gradient
             ++ " border-box"
         )
-        "border"
-        (String.fromInt options.width ++ "px solid transparent")
+        "border-color"
+        "transparent"
 
 
 {-| -}
@@ -1236,33 +1217,20 @@ opacity o =
 
 
 {-| -}
-scrollable : List (Attribute msg) -> Element msg -> Element msg
-scrollable attrs child =
-    Two.element Two.NodeAsDiv
-        Two.AsEl
-        (scrollbarY
-            :: width fill
-            :: height fill
-            :: attrs
-        )
-        [ child ]
+scrollableAll : Attribute msg
+scrollableAll =
+    Two.classWith Flag.overflow (Style.classes.scrollbars ++ " " ++ Style.classes.heightFill)
 
 
 {-| -}
-scrollbars : Attribute msg
-scrollbars =
-    Two.classWith Flag.overflow Style.classes.scrollbars
+scrollable : Attribute msg
+scrollable =
+    Two.classWith Flag.overflow (Style.classes.scrollbarsY ++ " " ++ Style.classes.heightFill)
 
 
 {-| -}
-scrollbarY : Attribute msg
-scrollbarY =
-    Two.classWith Flag.overflow Style.classes.scrollbarsY
-
-
-{-| -}
-scrollbarX : Attribute msg
-scrollbarX =
+scrollableX : Attribute msg
+scrollableX =
     Two.classWith Flag.overflow Style.classes.scrollbarsX
 
 
@@ -1270,25 +1238,6 @@ scrollbarX =
 clipWithEllipsis : Attribute msg
 clipWithEllipsis =
     Two.classWith Flag.fontEllipsis Style.classes.ellipses
-
-
-{-| Clip the content if it overflows.
-
-Similar to `scrollable`, this element will fill the space it's given.
-
-If the content overflows this element, it will be clipped.
-
--}
-clipped : List (Attribute msg) -> Element msg -> Element msg
-clipped attrs child =
-    Two.element Two.NodeAsDiv
-        Two.AsEl
-        (clip
-            :: width fill
-            :: height fill
-            :: attrs
-        )
-        [ child ]
 
 
 {-| -}
