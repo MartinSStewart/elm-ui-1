@@ -29,6 +29,7 @@ main =
                 (List.repeat 100 smallBox)
             , row
             , row2
+            , row3
             , Theme.h1 "Column"
             , column
             , column2
@@ -116,6 +117,37 @@ row2 =
         ]
 
 
+row3 =
+    Ui.row
+        [ Ui.spacing 80
+        , Ui.height Ui.fill
+        , Ui.padding 50
+        , Ui.border 2
+        ]
+        [ Ui.text "Row Three"
+        , Ui.el
+            [ Ui.height (Ui.px 200)
+            , Ui.width (Ui.px 20)
+            , Ui.padding 25
+            , Theme.rulerRight 200
+            , Theme.palette.pink
+            ]
+            (Ui.text "Height: 200px")
+        , Ui.el
+            [ Ui.height Ui.fill
+
+            -- , Theme.rulerRight 500
+            -- , Ui.widthMax 800
+            -- , Ui.width (Ui.px 200)
+            , Ui.padding 25
+            , Theme.palette.pink
+            , Ui.width (Ui.px 800)
+            , Ui.centerX
+            ]
+            (Ui.text "Center X, Width: 800px, Height fill")
+        ]
+
+
 column =
     Ui.column [ Ui.spacing 40, Ui.height (Ui.px 1500) ]
         [ Ui.text "Hello"
@@ -130,11 +162,12 @@ column =
             ]
             (Ui.text "Box:100px w/padding")
         , Ui.el [ Theme.rulerRight 200, Ui.width Ui.shrink ] <|
-            Ui.clipped
+            Ui.el
                 [ Ui.width (Ui.px 200)
                 , Ui.height (Ui.px 200)
                 , Ui.padding 40
                 , Theme.palette.pink
+                , Ui.clip
                 ]
                 (Ui.el
                     [ Ui.width (Ui.px 400)

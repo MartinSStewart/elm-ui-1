@@ -60,17 +60,18 @@ row =
             , Ui.padding 25
             , Theme.rulerRight 200
             , Theme.rulerTop 200
+            , Ui.rounded 20
 
             -- , Ui.backgroundGradient [ Theme.gradient ]
+            , Ui.border 5
             , Ui.borderGradient
                 { gradient = Theme.gradient
                 , background =
                     Ui.Gradient.linear (Ui.turns 0.35)
                         [ Ui.Gradient.percent 1 (Ui.rgb 0 255 255)
 
-                        -- , Ui.Gradient.percent 1 (Ui.rgb 0 255 255)
+                        -- , Ui.Gradient.percent 10 (Ui.rgb 0 255 255)
                         ]
-                , width = 5
                 }
             ]
             (Ui.text "Box:200px w/padding")
@@ -110,10 +111,11 @@ column =
             ]
             (Ui.text "Box:100px w/padding")
         , Ui.el [ Theme.rulerRight 200, Ui.width Ui.shrink ] <|
-            Ui.clipped
+            Ui.el
                 [ Ui.width (Ui.px 200)
                 , Ui.height (Ui.px 200)
                 , Ui.padding 40
+                , Ui.clip
                 , Ui.backgroundGradient [ Theme.gradient ]
                 ]
                 (Ui.el

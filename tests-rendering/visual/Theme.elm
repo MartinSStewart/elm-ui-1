@@ -28,7 +28,7 @@ garamond =
         { name = "EB Garamond"
         , fallback = [ Ui.Font.serif ]
         , variants = []
-        , weight = Ui.Font.regular
+        , weight = 400
         , size = 60
         , lineSpacing = 40
         , capitalSizeRatio = 0.7
@@ -76,11 +76,7 @@ grey =
 
 palette =
     { pink =
-        Ui.palette
-            { background = pink
-            , font = black
-            , border = black
-            }
+        Ui.background pink
     }
 
 
