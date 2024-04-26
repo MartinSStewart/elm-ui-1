@@ -937,6 +937,16 @@ baseSheet =
                 , Descriptor select.widthFill
                     [ Prop "flex-grow" "1"
                     ]
+                , Descriptor (dot classes.widthFill)
+                    [ -- .r > .wf:has(> :where(.we, .wb)) {
+                      --         min-width: min-content;
+                      --     }
+                      -- NOTE: usually we want to set min-width to 0 because the most common situation is that things don't collapse went you want them to.
+                      -- HOWEVER, this isn't the case for an element within a row that has a concrete width or a minimum bound set.
+                      Descriptor (":has(> :where(" ++ String.join ", " [ dot classes.widthExact, dot classes.widthBounded ] ++ "))")
+                        [ Prop "min-width" "min-content"
+                        ]
+                    ]
                 , Descriptor (dot classes.clip)
                     [ Descriptor select.widthFill
                         [ Prop "min-width" "auto" ]
