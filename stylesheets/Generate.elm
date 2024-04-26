@@ -743,6 +743,7 @@ baseSheet =
         , Prop "min-width" "0"
 
         -- inheritable font properties
+        -- We set these because user agents will set this to different values all the time and it's dumb
         , Prop "font-size" "inherit"
         , Prop "color" "inherit"
         , Prop "font-family" "inherit"
