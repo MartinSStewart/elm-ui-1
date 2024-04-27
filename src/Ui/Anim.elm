@@ -298,16 +298,24 @@ toAttr trigger incomingCss =
         css =
             incomingCss
                 |> addTriggerToCssClass trigger
-    in
-    Two.teleport
-        { trigger = triggerClass trigger
-        , class = css.hash
-        , style =
+
+        props =
             if css.transition == "" then
                 []
 
             else
                 [ ( "transition", css.transition ) ]
+    in
+    Two.teleport
+        { trigger = triggerClass trigger
+        , class = css.hash
+        , style =
+            case trigger of
+                OnRender ->
+                    incomingCss.props ++ props
+
+                _ ->
+                    props
         , data =
             css
                 |> Teleport.encodeCss (triggerPsuedo trigger) incomingCss.hash
