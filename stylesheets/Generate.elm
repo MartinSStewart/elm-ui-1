@@ -555,12 +555,9 @@ baseSheet =
         [ Prop "width" "100%"
         , Prop "height" "auto"
         , zIndex 0
-        , Descriptor (dot classes.el)
-            [ Prop "min-height" "100%"
-            , Prop "font-size" "16px"
-            , Prop "font-family" "\"Open Sans\", sans-serif"
-            , Prop "color" "#000"
-            ]
+        , Prop "min-height" "100%"
+        , Prop "font-size" "16px"
+        , Prop "font-family" "\"Open Sans\", sans-serif"
 
         -- Default line-height rules
         , Prop "line-height" "1.4"
