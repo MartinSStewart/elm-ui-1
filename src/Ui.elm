@@ -527,14 +527,23 @@ image :
         }
     -> Element msg
 image attrs img =
-    Two.element Two.NodeAsImage
+    Two.element Two.NodeAsDiv
         Two.AsEl
-        (Two.class Style.classes.imageContainer
-            :: htmlAttribute (Attr.src img.source)
-            :: htmlAttribute (Attr.alt img.description)
+        (width fill
+            :: Two.class Style.classes.imageContainer
+            :: clip
             :: attrs
         )
-        []
+        [ Two.element Two.NodeAsImage
+            Two.AsEl
+            (width fill
+                :: Two.class Style.classes.imageContainer
+                :: htmlAttribute (Attr.src img.source)
+                :: htmlAttribute (Attr.alt img.description)
+                :: []
+            )
+            []
+        ]
 
 
 url : String -> String
