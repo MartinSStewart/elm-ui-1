@@ -544,16 +544,17 @@ onTimelineWith timeline fn =
         |> toAttr OnRender
 
 
-onHover :
-    String
-    ->
-        { onHover : Attribute msg
-        , keyframes : List Step -> Attribute msg
-        }
-onHover identifier =
-    { onHover = Debug.todo ""
-    , keyframes = keyframeOnTrigger identifier
-    }
+
+-- onHover :
+--     String
+--     ->
+--         { onHover : Attribute msg
+--         , keyframes : List Step -> Attribute msg
+--         }
+-- onHover identifier =
+--     { onHover = Debug.todo ""
+--     , keyframes = keyframeOnTrigger identifier
+--     }
 
 
 keyframeOnTrigger : String -> List Step -> Attribute msg
