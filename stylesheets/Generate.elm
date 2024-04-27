@@ -148,7 +148,7 @@ classes =
     , onHovered = "on-hovered"
     , onFocused = "on-focused"
     , onFocusedWithin = "on-focused-within"
-    , onPressed = "on-pressed"
+    , onPressed = "on-activated"
     , onRendered = "on-rendered"
     , onDismout = "on-dismount"
 
@@ -272,7 +272,7 @@ They need separate names because we want to know what event occurred.
 animationTriggerKeyframes =
     """@keyframes on-hovered { from {} to {} }
 @keyframes on-focused { from {} to {} }
-@keyframes on-pressed { from {} to {} }
+@keyframes on-activated { from {} to {} }
 @keyframes on-rendered { from {} to {} }
 @keyframes on-dismount { from {} to {} }"""
 
@@ -1396,8 +1396,8 @@ animationTriggers =
     , toTrigger ".on-focused-within:focus-within"
         [ Prop "animation" "on-focused 1ms"
         ]
-    , toTrigger ".on-pressed:active"
-        [ Prop "animation" "on-pressed 1ms"
+    , toTrigger ".on-activated:active"
+        [ Prop "animation" "on-activated 1ms"
         ]
     , toTrigger ".on-rendered"
         [ Prop "animation" "on-rendered 1ms"

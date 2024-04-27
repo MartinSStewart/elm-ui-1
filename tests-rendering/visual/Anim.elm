@@ -41,6 +41,7 @@ init () =
     ( { ui = Ui.Anim.init
       , checked = False
       , email = ""
+      , show = False
       }
     , Cmd.none
     )
@@ -49,6 +50,7 @@ init () =
 type Msg
     = Ui Ui.Anim.Msg
     | Clicked
+    | ShowClicked
 
 
 update msg model =
@@ -64,6 +66,11 @@ update msg model =
 
         Clicked ->
             ( model
+            , Cmd.none
+            )
+
+        ShowClicked ->
+            ( { model | show = not model.show }
             , Cmd.none
             )
 
@@ -93,7 +100,7 @@ view model =
             , fallback = [ Ui.Font.serif ]
             , variants =
                 []
-            , weight = Ui.Font.regular
+            , weight = 400
             , size = 32
             , lineSpacing = 4
             , capitalSizeRatio = 0.7
@@ -192,6 +199,47 @@ view model =
                         [ Ui.Anim.borderColor Theme.pink
                         ]
                     ]
+                ]
+            , Theme.h1 "Intro animation"
+            , Ui.row
+                [ Ui.spacing 20
+                , Ui.Events.onClick ShowClicked
+                ]
+                [ box
+                    [ Ui.Anim.hovered (Ui.Anim.ms 200)
+                        [ Ui.Anim.borderColor Theme.pink
+                        ]
+                    ]
+                , if model.show then
+                    box
+                        [ Ui.opacity 0
+                        , Ui.Anim.keyframes
+                            [ Ui.Anim.set []
+                            , Ui.Anim.step (Ui.Anim.ms 2000)
+                                [ Ui.Anim.opacity 0.5 ]
+                            ]
+                        ]
+
+                  else
+                    Ui.none
+                , if model.show then
+                    box
+                        [ Ui.Anim.intro (Ui.Anim.ms 2000)
+                            { start =
+                                [ Ui.Anim.opacity 0
+                                , Ui.Anim.x -300
+                                ]
+                            , to =
+                                [ Ui.Anim.opacity 1
+                                , Ui.Anim.x 0
+                                , Ui.Anim.scale 0.5
+                                , Ui.Anim.rotation 0.2
+                                ]
+                            }
+                        ]
+
+                  else
+                    Ui.none
                 ]
             , Theme.h1 "A simple spinning animation (standard, linear, wobble)"
             , Ui.row [ Ui.spacing 20 ]

@@ -1,17 +1,19 @@
 module Ui.Anim exposing
     ( layout
     , init, Msg, update, State
-    , Animator, updateWith, subscription, watching
-    , Animated
+    , transition, intro, hovered, focused, active
     , Duration, ms
-    , transition, hovered, focused, pressed
-    , opacity, x, y, rotation, scale, scaleX, scaleY
+    , Animated, opacity
+    , x, y, z
+    , rotation, rotationAround
+    , scale, scaleX, scaleY, scaleZ
     , backgroundColor, fontColor, borderColor
     , Transition, withTransition, withStepTransition
     , linear, spring, bezier
-    , keyframes, hoveredWith, focusedWith, pressedWith
+    , keyframes, hoveredWith, focusedWith, activeWith
     , Step, set, wait, step
     , loop, loopFor
+    , Animator, updateWith, subscription, watching
     , onTimeline, onTimelineWith
     , mapAttribute
     )
@@ -25,21 +27,23 @@ module Ui.Anim exposing
 
 @docs init, Msg, update, State
 
-@docs Animator, updateWith, subscription, watching
-
 
 # Animations
 
-@docs Animated
+@docs transition, intro, hovered, focused, active
 
 @docs Duration, ms
-
-@docs transition, hovered, focused, pressed
 
 
 # Properties
 
-@docs opacity, x, y, rotation, scale, scaleX, scaleY
+@docs Animated, opacity
+
+@docs x, y, z
+
+@docs rotation, rotationAround
+
+@docs scale, scaleX, scaleY, scaleZ
 
 @docs backgroundColor, fontColor, borderColor
 
@@ -63,9 +67,9 @@ module Ui.Anim exposing
 -- @docs spinning, pulsing, bouncing, pinging
 
 
-# Using Timelines
+# Keyframes
 
-@docs keyframes, hoveredWith, focusedWith, pressedWith
+@docs keyframes, hoveredWith, focusedWith, activeWith
 
 @docs Step, set, wait, step
 
@@ -73,6 +77,8 @@ module Ui.Anim exposing
 
 
 # Using Timelines
+
+@docs Animator, updateWith, subscription, watching
 
 @docs onTimeline, onTimelineWith
 
@@ -232,7 +238,7 @@ onFocusWithinTrigger =
 
 onActiveTrigger : String
 onActiveTrigger =
-    "on-pressed"
+    "on-activated"
 
 
 
@@ -298,7 +304,7 @@ toAttr trigger incomingCss =
         , class = css.hash
         , style =
             if css.transition == "" then
-                [ ( "transition", "transform 1000ms" ) ]
+                []
 
             else
                 [ ( "transition", css.transition ) ]
@@ -346,6 +352,24 @@ transition dur attrs =
 
 
 {-| -}
+intro :
+    Duration
+    ->
+        { start : List Animated
+        , to : List Animated
+        }
+    -> Attribute msg
+intro dur attrs =
+    -- we do this because we have to render css keyframes
+    Animator.keyframes
+        [ Animator.set attrs.start
+        , Animator.step dur attrs.to
+        ]
+        |> Animator.toCss
+        |> toAttr OnRender
+
+
+{-| -}
 hovered : Duration -> List Animated -> Attribute msg
 hovered dur attrs =
     transitionWithTrigger Hover dur attrs
@@ -358,8 +382,8 @@ focused dur attrs =
 
 
 {-| -}
-pressed : Duration -> List Animated -> Attribute msg
-pressed dur attrs =
+active : Duration -> List Animated -> Attribute msg
+active dur attrs =
     transitionWithTrigger Active dur attrs
 
 
@@ -433,9 +457,27 @@ scaleY =
 
 
 {-| -}
+scaleZ : Float -> Animated
+scaleZ =
+    Animator.scaleZ
+
+
+{-| -}
 rotation : Float -> Animated
 rotation =
     Animator.rotation
+
+
+{-| -}
+rotationAround :
+    { x : Float
+    , y : Float
+    , z : Float
+    }
+    -> Float
+    -> Animated
+rotationAround =
+    Animator.rotationAround
 
 
 {-| -}
@@ -448,6 +490,12 @@ x =
 y : Float -> Animated
 y =
     Animator.y
+
+
+{-| -}
+z : Float -> Animated
+z =
+    Animator.z
 
 
 {-| -}
@@ -488,6 +536,25 @@ onTimelineWith timeline fn =
         |> toAttr OnRender
 
 
+onHover :
+    String
+    ->
+        { onHover : Attribute msg
+        , keyframes : List Step -> Attribute msg
+        }
+onHover identifier =
+    { onHover = Debug.todo ""
+    , keyframes = keyframeOnTrigger identifier
+    }
+
+
+keyframeOnTrigger : String -> List Step -> Attribute msg
+keyframeOnTrigger trigger steps =
+    Animator.keyframes steps
+        |> Animator.toCss
+        |> toAttr OnRender
+
+
 {-| -}
 keyframes : List Step -> Attribute msg
 keyframes steps =
@@ -513,8 +580,8 @@ focusedWith steps =
 
 
 {-| -}
-pressedWith : List Step -> Attribute msg
-pressedWith steps =
+activeWith : List Step -> Attribute msg
+activeWith steps =
     Animator.keyframes steps
         |> Animator.toCss
         |> toAttr Active
