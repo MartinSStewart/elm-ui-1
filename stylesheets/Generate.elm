@@ -20,7 +20,7 @@ output =
 
 
 classes =
-    { root = "ui"
+    { root = "elm-ui-root"
     , any = "s"
     , el = "e"
     , row = "r"
