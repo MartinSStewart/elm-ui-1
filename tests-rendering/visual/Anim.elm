@@ -102,7 +102,7 @@ view model =
                 []
             , weight = 400
             , size = 32
-            , lineSpacing = 4
+            , lineSpacing = 18
             , capitalSizeRatio = 0.7
             }
         , Ui.Events.onClick
@@ -212,9 +212,8 @@ view model =
                     ]
                 , if model.show then
                     box
-                        [ Ui.opacity 0
-                        , Ui.Anim.keyframes
-                            [ Ui.Anim.set []
+                        [ Ui.Anim.keyframes
+                            [ Ui.Anim.set [ Ui.Anim.opacity 0 ]
                             , Ui.Anim.step (Ui.Anim.ms 2000)
                                 [ Ui.Anim.opacity 0.5 ]
                             ]
@@ -240,6 +239,37 @@ view model =
 
                   else
                     Ui.none
+                ]
+            , Theme.h1 "Parent triggers"
+            , let
+                trigger =
+                    Ui.Anim.onHover "hover-row"
+              in
+              Ui.row
+                [ Ui.spacing 20
+                , trigger.onHover
+                ]
+                [ box
+                    [ trigger.keyframes
+                        [ Ui.Anim.set [ Ui.Anim.opacity 0 ]
+                        , Ui.Anim.step (Ui.Anim.ms 2000)
+                            [ Ui.Anim.opacity 0.5 ]
+                        ]
+                    ]
+                , box
+                    [ trigger.keyframes
+                        [ Ui.Anim.set [ Ui.Anim.opacity 0 ]
+                        , Ui.Anim.step (Ui.Anim.ms 2000)
+                            [ Ui.Anim.opacity 0.5 ]
+                        ]
+                    ]
+                , box
+                    [ trigger.keyframes
+                        [ Ui.Anim.set [ Ui.Anim.opacity 0 ]
+                        , Ui.Anim.step (Ui.Anim.ms 2000)
+                            [ Ui.Anim.opacity 0.5 ]
+                        ]
+                    ]
                 ]
             , Theme.h1 "A simple spinning animation (standard, linear, wobble)"
             , Ui.row [ Ui.spacing 20 ]

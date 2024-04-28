@@ -1,15 +1,19 @@
 module Internal.Teleport exposing
     ( persistentClass, persistentId
-    , Box, CssAnimation, Data(..), Event, Trigger(..), decode, encodeCss, stringToTrigger
+    , encodeParentTrigger, encodeChildReaction
+    , Box, CssAnimation, Data(..), Event, ParentTriggerDetails, Trigger(..), decode, encodeCss, reactionPropertyName, stringToTrigger
     )
 
 {-| This is data that is teleported to the central state.
 
 @docs persistentClass, persistentId
 
+@docs encodeParentTrigger, encodeChildReaction
+
 -}
 
 import Animator
+import Html.Attributes as Attr
 import Json.Decode as Decode
 import Json.Encode as Encode
 
@@ -31,24 +35,46 @@ persistentId group instance =
 -- ENCODER
 
 
-encodeCss : String -> String -> Animator.Css -> Encode.Value
-encodeCss trigger keyframesHash css =
+encodeCss : String -> String -> Bool -> Animator.Css -> Encode.Value
+encodeCss trigger keyframesHash asImportant css =
     Encode.object
-        [ ( "trigger", Encode.string trigger )
+        [ ( "type", Encode.string "css" )
+        , ( "trigger", Encode.string trigger )
         , ( "hash", Encode.string css.hash )
         , ( "keyframesHash", Encode.string keyframesHash )
         , ( "keyframes", Encode.string css.keyframes )
         , ( "transition", Encode.string css.transition )
-        , ( "props", Encode.list encodeProp css.props )
+        , ( "props", Encode.list (encodeProp asImportant) css.props )
         ]
 
 
-encodeProp : ( String, String ) -> Encode.Value
-encodeProp ( key, value ) =
+encodeProp : Bool -> ( String, String ) -> Encode.Value
+encodeProp asImportant ( key, value ) =
     Encode.object
         [ ( "key", Encode.string key )
-        , ( "value", Encode.string (value ++ " !important") )
+        , ( "value"
+          , if asImportant then
+                --  this works for hover but not for intro
+                Encode.string (value ++ " !important")
+
+            else
+                Encode.string value
+          )
         ]
+
+
+encodeParentTrigger : String -> String -> Encode.Value
+encodeParentTrigger trigger identifierClass =
+    Encode.object
+        [ ( "type", Encode.string "parentTrigger" )
+        , ( "trigger", Encode.string trigger )
+        , ( "identifierClass", Encode.string identifierClass )
+        ]
+
+
+encodeChildReaction : String -> String -> String -> Animator.Css -> Encode.Value
+encodeChildReaction triggerPseudoclass identifierClass keyframeHash css =
+    encodeCss triggerPseudoclass keyframeHash False css
 
 
 
@@ -57,6 +83,7 @@ encodeProp ( key, value ) =
 
 type Data
     = Css CssAnimation
+    | ParentTrigger ParentTriggerDetails
 
 
 type Trigger
@@ -105,16 +132,65 @@ decode : Decode.Decoder Event
 decode =
     Decode.map2 Event
         (Decode.field "timeStamp" Decode.float)
-        (Decode.field "target"
-            (Decode.field "data-elm-ui"
-                (Decode.list decodeData)
-            )
+        (Decode.oneOf
+            [ Decode.field "target"
+                (Decode.field "data-elm-ui"
+                    (Decode.list decodeCssData)
+                )
+            , Decode.field "target"
+                (Decode.field "data-elm-ui"
+                    (Decode.map2
+                        (\trigger identifierClass ->
+                            { trigger = trigger
+                            , identifierClass = identifierClass
+                            }
+                        )
+                        (Decode.field "trigger" Decode.string)
+                        (Decode.field "identifierClass" Decode.string)
+                    )
+                    |> Decode.andThen
+                        (\idents ->
+                            Decode.map
+                                (\cssChildren ->
+                                    [ ParentTrigger <|
+                                        ParentTriggerDetails
+                                            idents.trigger
+                                            idents.identifierClass
+                                            cssChildren
+                                    ]
+                                )
+                                (Decode.field "parentNode"
+                                    (decodeCssChildren idents.identifierClass)
+                                )
+                        )
+                )
+            ]
         )
 
 
-decodeData : Decode.Decoder Data
-decodeData =
-    Decode.map Css decodeCss
+decodeCssData : Decode.Decoder Data
+decodeCssData =
+    Decode.field "type" Decode.string
+        |> Decode.andThen
+            (\str ->
+                case str of
+                    "css" ->
+                        Decode.map Css decodeCss
+
+                    _ ->
+                        Decode.fail ("Unknown type: " ++ str)
+            )
+
+
+{-| Parent triggers are never disabled, because the children may have changed their animation in some way.
+-}
+type alias ParentTriggerDetails =
+    { trigger : String
+
+    -- The unique identifier provided by the user
+    , identifierClass : String
+    , children : List CssAnimation
+    }
 
 
 type alias CssAnimation =
@@ -143,3 +219,69 @@ decodeProp =
     Decode.map2 (\key value -> ( key, value ))
         (Decode.field "key" Decode.string)
         (Decode.field "value" Decode.string)
+
+
+reactionPropertyName : String -> String
+reactionPropertyName identifier =
+    "data-elm-ui-reaction-" ++ identifier
+
+
+decodeTriggeredChild : String -> Decode.Decoder (List CssAnimation)
+decodeTriggeredChild identifier =
+    Decode.oneOf
+        [ Decode.field (reactionPropertyName identifier)
+            (Decode.list decodeCss)
+        , Decode.succeed []
+        ]
+
+
+decodeCssChildren : String -> Decode.Decoder (List CssAnimation)
+decodeCssChildren identifier =
+    decodeTriggeredChild identifier
+        |> Decode.andThen
+            (\triggeredChildren ->
+                case triggeredChildren of
+                    [] ->
+                        -- No children found, keep searching
+                        Decode.map2
+                            (++)
+                            (Decode.field "nextElementSibling"
+                                (Decode.oneOf
+                                    [ Decode.null []
+                                    , Decode.lazy
+                                        (\_ ->
+                                            decodeCssChildren identifier
+                                        )
+                                    ]
+                                )
+                            )
+                            (Decode.field "firstElementChild"
+                                (Decode.oneOf
+                                    [ Decode.null []
+                                    , Decode.lazy
+                                        (\_ ->
+                                            decodeCssChildren identifier
+                                        )
+                                    ]
+                                )
+                            )
+
+                    nonEmpty ->
+                        -- We've found something
+                        -- let's skip searching its children
+                        -- but lets continue searching its siblings
+                        Decode.map
+                            (\next ->
+                                nonEmpty ++ next
+                            )
+                            (Decode.field "nextElementSibling"
+                                (Decode.oneOf
+                                    [ Decode.null []
+                                    , Decode.lazy
+                                        (\_ ->
+                                            decodeCssChildren identifier
+                                        )
+                                    ]
+                                )
+                            )
+            )

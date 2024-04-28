@@ -13,6 +13,7 @@ module Ui.Anim exposing
     , keyframes, hoveredWith, focusedWith, activeWith
     , Step, set, wait, step
     , loop, loopFor
+    , onHover, onFocus, onActive
     , Animator, updateWith, subscription, watching
     , onTimeline, onTimelineWith
     , mapAttribute
@@ -74,6 +75,11 @@ module Ui.Anim exposing
 @docs Step, set, wait, step
 
 @docs loop, loopFor
+
+
+# Parent triggers
+
+@docs onHover, onFocus, onActive
 
 
 # Using Timelines
@@ -318,8 +324,18 @@ toAttr trigger incomingCss =
                     props
         , data =
             css
-                |> Teleport.encodeCss (triggerPsuedo trigger) incomingCss.hash
+                |> Teleport.encodeCss (triggerPsuedo trigger) incomingCss.hash (asImportant trigger)
         }
+
+
+asImportant : Trigger -> Bool
+asImportant trigger =
+    case trigger of
+        OnRender ->
+            False
+
+        _ ->
+            True
 
 
 transitionWithTrigger : Trigger -> Duration -> List Animated -> Attribute msg
@@ -544,24 +560,99 @@ onTimelineWith timeline fn =
         |> toAttr OnRender
 
 
+{-| -}
+onHover :
+    String
+    ->
+        { onHover : Attribute msg
+        , keyframes : List Step -> Attribute msg
+        }
+onHover identifier =
+    { onHover =
+        Two.teleportTrigger
+            { trigger = onHoverTrigger
+            , identifierClass = identifier
+            }
+    , keyframes =
+        \steps ->
+            Animator.keyframes steps
+                |> Animator.toCss
+                |> toReactionAttr identifier Hover
+    }
 
--- onHover :
---     String
---     ->
---         { onHover : Attribute msg
---         , keyframes : List Step -> Attribute msg
---         }
--- onHover identifier =
---     { onHover = Debug.todo ""
---     , keyframes = keyframeOnTrigger identifier
---     }
+
+{-| -}
+onFocus :
+    String
+    ->
+        { onFocus : Attribute msg
+        , keyframes : List Step -> Attribute msg
+        }
+onFocus identifier =
+    { onFocus =
+        Two.teleportTrigger
+            { trigger = onFocusTrigger
+            , identifierClass = identifier
+            }
+    , keyframes =
+        \steps ->
+            Animator.keyframes steps
+                |> Animator.toCss
+                |> toReactionAttr identifier Focus
+    }
 
 
-keyframeOnTrigger : String -> List Step -> Attribute msg
-keyframeOnTrigger trigger steps =
-    Animator.keyframes steps
-        |> Animator.toCss
-        |> toAttr OnRender
+{-| -}
+onActive :
+    String
+    ->
+        { onActive : Attribute msg
+        , keyframes : List Step -> Attribute msg
+        }
+onActive identifier =
+    { onActive =
+        Two.teleportTrigger
+            { trigger = onActiveTrigger
+            , identifierClass = identifier
+            }
+    , keyframes =
+        \steps ->
+            Animator.keyframes steps
+                |> Animator.toCss
+                |> toReactionAttr identifier Active
+    }
+
+
+toReactionAttr : String -> Trigger -> Animator.Css -> Attribute msg
+toReactionAttr identifier trigger incomingCss =
+    let
+        css =
+            incomingCss
+                |> addTriggerToCssClass trigger
+
+        props =
+            if css.transition == "" then
+                []
+
+            else
+                [ ( "transition", css.transition ) ]
+    in
+    Two.teleportReaction
+        { trigger = triggerClass trigger
+        , identifierClass = identifier
+        , class = css.hash
+        , style =
+            -- case trigger of
+            --     OnRender ->
+            List.filter (\( name, _ ) -> name /= "animation") incomingCss.props
+                ++ props
+
+        -- _ ->
+        -- props
+        , data =
+            css
+                |> Teleport.encodeChildReaction (triggerPsuedo trigger) identifier incomingCss.hash
+        }
 
 
 {-| -}

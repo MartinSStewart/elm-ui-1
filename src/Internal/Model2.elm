@@ -124,9 +124,56 @@ update toAppMsg msg ((State details) as unchanged) =
             )
 
 
+addChildReactions : Teleport.ParentTriggerDetails -> List Teleport.CssAnimation -> State -> ( State, List (Cmd Msg) )
+addChildReactions parent anims ((State state) as untouched) =
+    case anims of
+        [] ->
+            ( untouched, [] )
+
+        css :: remaining ->
+            if Set.member css.hash state.added then
+                addChildReactions parent remaining untouched
+
+            else
+                -- The key difference between this renderer and the one in applyTeleported
+                -- is that this one does *not* disable the trigger element
+                -- Because the parent that fired the trigger doesn't know if the child changed in some way.
+                let
+                    cssClass =
+                        -- "." ++ css.hash ++ css.trigger ++ "{" ++ addStylesToString css.props "" ++ "}"
+                        ("." ++ parent.identifierClass ++ css.trigger ++ " ." ++ css.hash)
+                            ++ ("{" ++ addStylesToString css.props "" ++ "}")
+
+                    keyframes =
+                        if Set.member css.keyframesHash state.added then
+                            state.keyframes
+
+                        else
+                            state.keyframes
+                                |> addRule css.keyframes
+                in
+                addChildReactions parent
+                    remaining
+                    (State
+                        { state
+                            | rules =
+                                state.rules
+                                    |> addRule cssClass
+                            , keyframes = keyframes
+                            , added =
+                                state.added
+                                    |> Set.insert css.hash
+                                    |> Set.insert css.keyframesHash
+                        }
+                    )
+
+
 applyTeleported : Teleport.Event -> Teleport.Data -> ( State, List (Cmd Msg) ) -> ( State, List (Cmd Msg) )
 applyTeleported event data ( (State state) as untouched, cmds ) =
     case data of
+        Teleport.ParentTrigger parentTrigger ->
+            addChildReactions parentTrigger parentTrigger.children untouched
+
         Teleport.Css css ->
             if Set.member css.hash state.added then
                 ( untouched, cmds )
@@ -293,6 +340,83 @@ teleport options =
                                 Html.div
                                     [ Attr.class (options.class ++ " " ++ Style.classes.trigger)
                                     , Attr.property "data-elm-ui" (Encode.list identity [ options.data ])
+                                    , Attr.style "pointer-events" "none"
+                                    ]
+                                    []
+                            )
+                        )
+                }
+        }
+
+
+teleportTrigger :
+    { trigger : String
+    , identifierClass : String
+    }
+    -> Attribute msg
+teleportTrigger options =
+    Attribute
+        { flag = Flag.skip
+        , attr =
+            Attr
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Just (options.trigger ++ " " ++ options.identifierClass)
+                , styles =
+                    \_ _ ->
+                        []
+                , nearby =
+                    Just
+                        ( Trigger
+                        , Element
+                            (\_ ->
+                                Html.div
+                                    [ Attr.class Style.classes.trigger
+                                    , Attr.property "data-elm-ui"
+                                        (Teleport.encodeParentTrigger
+                                            options.trigger
+                                            options.identifierClass
+                                        )
+                                    , Attr.style "pointer-events" "none"
+                                    ]
+                                    []
+                            )
+                        )
+                }
+        }
+
+
+teleportReaction :
+    { trigger : String
+    , identifierClass : String
+    , class : String
+    , style : List ( String, String )
+    , data : Encode.Value
+    }
+    -> Attribute msg
+teleportReaction options =
+    Attribute
+        { flag = Flag.skip
+        , attr =
+            Attr
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Just options.class
+                , styles =
+                    \_ _ ->
+                        options.style
+                , nearby =
+                    Just
+                        ( Trigger
+                        , Element
+                            (\_ ->
+                                Html.div
+                                    [ Attr.class (options.class ++ " " ++ Style.classes.trigger)
+                                    , Attr.property
+                                        (Teleport.reactionPropertyName options.identifierClass)
+                                        (Encode.list identity [ options.data ])
                                     , Attr.style "pointer-events" "none"
                                     ]
                                     []
@@ -1449,6 +1573,9 @@ toBehindElements inheritance foundElems attrs =
                         Just ( Behind, behindElem ) ->
                             toBehindElements inheritance (nearbyToHtml inheritance Behind behindElem :: foundElems) remain
 
+                        Just ( Trigger, triggerElem ) ->
+                            toBehindElements inheritance (nearbyToHtml inheritance Trigger triggerElem :: foundElems) remain
+
                         _ ->
                             toBehindElements inheritance foundElems remain
 
@@ -1471,6 +1598,9 @@ toNearbyElements inheritance foundElems attrs =
                             toNearbyElements inheritance foundElems remain
 
                         Just ( Behind, _ ) ->
+                            toNearbyElements inheritance foundElems remain
+
+                        Just ( Trigger, _ ) ->
                             toNearbyElements inheritance foundElems remain
 
                         Just ( location, nearbyElem ) ->
