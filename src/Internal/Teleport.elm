@@ -47,7 +47,7 @@ encodeProp : ( String, String ) -> Encode.Value
 encodeProp ( key, value ) =
     Encode.object
         [ ( "key", Encode.string key )
-        , ( "value", Encode.string value )
+        , ( "value", Encode.string (value ++ " !important") )
         ]
 
 
