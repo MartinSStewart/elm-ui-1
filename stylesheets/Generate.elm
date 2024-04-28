@@ -593,6 +593,9 @@ baseSheet =
                 ]
             ]
         ]
+    , Class (dot classes.trigger)
+        [ Prop "position" "absolute"
+        ]
     , Class (dot classes.nearby)
         [ Prop "position" "relative"
         , Prop "border" "none"
