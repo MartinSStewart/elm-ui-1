@@ -49,25 +49,25 @@ import Ui exposing (Attribute)
 {-| -}
 onClick : msg -> Attribute msg
 onClick msg =
-    Two.onPress msg
+    Two.attribute (Html.Events.onClick msg)
 
 
 {-| -}
 onDoubleClick : msg -> Attribute msg
-onDoubleClick =
-    Two.attribute << Html.Events.onDoubleClick
+onDoubleClick msg =
+    Two.attribute (Html.Events.onDoubleClick msg)
 
 
 {-| -}
 onMouseEnter : msg -> Attribute msg
-onMouseEnter =
-    Two.attribute << Html.Events.onMouseEnter
+onMouseEnter msg =
+    Two.attribute (Html.Events.onMouseEnter msg)
 
 
 {-| -}
 onMouseLeave : msg -> Attribute msg
-onMouseLeave =
-    Two.attribute << Html.Events.onMouseLeave
+onMouseLeave msg =
+    Two.attribute (Html.Events.onMouseLeave msg)
 
 
 {-| -}

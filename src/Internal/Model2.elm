@@ -696,13 +696,6 @@ onPress msg =
                 , additionalInheritance = BitField.none
                 , attrs =
                     [ Events.onClick msg
-
-                    --     Events.stopPropagationOn "pointerdown"
-                    --     (Json.succeed ( msg, True ))
-                    -- , onKeyListener "Enter"
-                    --     msg
-                    -- , Attr.tabindex
-                    --     0
                     ]
                 , class = Just Style.classes.cursorPointer
                 , styles = noStyles

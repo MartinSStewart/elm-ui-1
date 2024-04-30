@@ -1,6 +1,7 @@
 module Ui.Input exposing
     ( Label, label, labelHidden
     , checkbox
+    , button
     , text, multiline
     , username, newPassword, currentPassword, email, search, spellChecked
     , sliderHorizontal, sliderVertical, Thumb, thumb, thumbWith
@@ -52,6 +53,11 @@ This is also the first input element that has a [`required label`](#Label).
             }
 
 @docs checkbox
+
+
+# Button
+
+@docs button
 
 
 # Text
@@ -204,6 +210,18 @@ charcoal =
 type Label
     = HiddenLabel String
     | LabelFromId String
+
+
+{-| This is very similar to `Ui.Events.onClick`, but will change the underlying HTML to use a `<button>` element.
+
+This is important for accessibility because it allows the button to be keyboard focused and triggered by the `Enter` key as well as the `Space` key.
+
+This is an attribute instead of an element so that it can easily be switched out for a link using `Ui.link`.
+
+-}
+button : msg -> Ui.Attribute msg
+button =
+    Two.onPress
 
 
 {-| Sometimes you may need to have a label which is not visible, but is still accessible to screen readers.
