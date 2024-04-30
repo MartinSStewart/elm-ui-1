@@ -35,8 +35,16 @@ persistentId group instance =
 -- ENCODER
 
 
-encodeCss : String -> String -> Bool -> Animator.Css -> Encode.Value
-encodeCss trigger keyframesHash asImportant css =
+encodeCss : String -> String -> Animator.Css -> Encode.Value
+encodeCss trigger keyframesHash css =
+    let
+        -- If this is a transition (meanining no keyframes)
+        -- Then we need to render the props as !important
+        -- If there are keyframes, then the props can't be !important
+        -- or else they'll clobber the animation
+        noKeyframes =
+            String.isEmpty css.keyframes
+    in
     Encode.object
         [ ( "type", Encode.string "css" )
         , ( "trigger", Encode.string trigger )
@@ -44,7 +52,7 @@ encodeCss trigger keyframesHash asImportant css =
         , ( "keyframesHash", Encode.string keyframesHash )
         , ( "keyframes", Encode.string css.keyframes )
         , ( "transition", Encode.string css.transition )
-        , ( "props", Encode.list (encodeProp asImportant) css.props )
+        , ( "props", Encode.list (encodeProp noKeyframes) css.props )
         ]
 
 
@@ -74,7 +82,7 @@ encodeParentTrigger trigger identifierClass =
 
 encodeChildReaction : String -> String -> String -> Animator.Css -> Encode.Value
 encodeChildReaction triggerPseudoclass identifierClass keyframeHash css =
-    encodeCss triggerPseudoclass keyframeHash False css
+    encodeCss triggerPseudoclass keyframeHash css
 
 
 

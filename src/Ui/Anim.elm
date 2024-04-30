@@ -324,18 +324,8 @@ toAttr trigger incomingCss =
                     props
         , data =
             css
-                |> Teleport.encodeCss (triggerPsuedo trigger) incomingCss.hash (asImportant trigger)
+                |> Teleport.encodeCss (triggerPsuedo trigger) incomingCss.hash
         }
-
-
-asImportant : Trigger -> Bool
-asImportant trigger =
-    case trigger of
-        OnRender ->
-            False
-
-        _ ->
-            True
 
 
 transitionWithTrigger : Trigger -> Duration -> List Animated -> Attribute msg

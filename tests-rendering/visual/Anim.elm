@@ -115,7 +115,6 @@ view model =
             , Ui.spacing 100
             ]
             [ Theme.h1 "Row"
-            , Theme.description "Hello"
             , Theme.h1 "Hovering animations are independent"
             , Ui.row [ Ui.spacing 20 ]
                 [ box
@@ -351,7 +350,7 @@ view model =
                                 [ Ui.Anim.rotation 0
                                 ]
                             , Ui.Anim.step (Ui.Anim.ms 2000)
-                                [ Ui.Anim.rotation 1
+                                [ Ui.Anim.rotation 0.5
                                 ]
                             ]
                         ]
@@ -379,7 +378,7 @@ view model =
                                 [ Ui.Anim.rotation 1
                                     |> Ui.Anim.withTransition
                                         (Ui.Anim.spring
-                                            { wobble = 1
+                                            { wobble = 0.5
                                             , quickness = 0
                                             }
                                         )
@@ -388,43 +387,78 @@ view model =
                         ]
                     ]
                 ]
+            , Ui.row [ Ui.spacing 20 ]
+                (List.map
+                    (\wobble ->
+                        mini
+                            [ Ui.Anim.keyframes
+                                [ Ui.Anim.loop
+                                    [ Ui.Anim.set
+                                        [ Ui.Anim.rotation 0
+                                        ]
+                                    , Ui.Anim.step (Ui.Anim.ms 1000)
+                                        [ Ui.Anim.rotation 0.5
+                                            |> Ui.Anim.withTransition
+                                                (Ui.Anim.spring
+                                                    { wobble = wobble
+                                                    , quickness = 0
+                                                    }
+                                                )
+                                        ]
+                                    ]
 
-            -- , Ui.row [ Ui.spacing 20 ]
-            --     (List.map
-            --         (\wobble ->
-            --             mini
-            --                 [ Ui.Anim.keyframes
-            --                     [ Ui.Anim.loop
-            --                         [ Ui.Anim.set
-            --                             [ Ui.Anim.rotation 0
-            --                             ]
-            --                         , Ui.Anim.step (Ui.Anim.ms 2000)
-            --                             [ Ui.Anim.rotation 1
-            --                                 |> Ui.Anim.withTransition
-            --                                     (Ui.Anim.spring
-            --                                         { wobble = wobble
-            --                                         , quickness = 0
-            --                                         }
-            --                                     )
-            --                             ]
-            --                         ]
-            --                     -- |> Ui.Anim.withStepTransition Ui.Anim.wobble 0.2
-            --                     ]
-            --                 ]
-            --         )
-            --         [ 0
-            --         , 0.1
-            --         , 0.2
-            --         , 0.3
-            --         , 0.4
-            --         , 0.5
-            --         , 0.6
-            --         , 0.7
-            --         , 0.8
-            --         , 0.9
-            --         , 1
-            --         ]
-            --     )
+                                -- |> Ui.Anim.withStepTransition Ui.Anim.wobble 0.2
+                                ]
+                            ]
+                    )
+                    [ 0
+                    , 0.1
+                    , 0.2
+                    , 0.3
+                    , 0.4
+                    , 0.5
+                    , 0.6
+                    , 0.7
+                    , 0.8
+                    , 0.9
+                    , 1
+                    ]
+                )
+            , Ui.row [ Ui.spacing 20 ]
+                (List.map
+                    (\wobble ->
+                        mini
+                            [ Ui.Anim.keyframes
+                                [ Ui.Anim.loop
+                                    [ Ui.Anim.set
+                                        [ Ui.Anim.rotation 0
+                                        ]
+                                    , Ui.Anim.step (Ui.Anim.ms 1000)
+                                        [ Ui.Anim.rotation 0.5
+                                            |> Ui.Anim.withTransition
+                                                (Ui.Anim.spring
+                                                    { wobble = wobble
+                                                    , quickness = 1
+                                                    }
+                                                )
+                                        ]
+                                    ]
+                                ]
+                            ]
+                    )
+                    [ 0
+                    , 0.1
+                    , 0.2
+                    , 0.3
+                    , 0.4
+                    , 0.5
+                    , 0.6
+                    , 0.7
+                    , 0.8
+                    , 0.9
+                    , 1
+                    ]
+                )
             ]
         )
 
