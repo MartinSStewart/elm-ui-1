@@ -530,7 +530,6 @@ image attrs img =
     Two.element Two.NodeAsDiv
         Two.AsEl
         (width fill
-            :: Two.class Style.classes.imageContainer
             :: clip
             :: attrs
         )
