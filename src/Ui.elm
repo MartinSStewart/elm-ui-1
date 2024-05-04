@@ -516,6 +516,7 @@ So, take a moment to describe your image as you would to someone who has a harde
     Ui.image []
         { source = "https://example.com/image.jpg"
         , description = "A picture of my cat looking goofy."
+        , onLoad = Nothing
         }
 
 -}
@@ -524,23 +525,30 @@ image :
     ->
         { source : String
         , description : String
+        , onLoad : Maybe msg
         }
     -> Element msg
 image attrs img =
     Two.element Two.NodeAsDiv
         Two.AsEl
         (width fill
-            :: clip
             :: attrs
         )
         [ Two.element Two.NodeAsImage
             Two.AsEl
-            (width fill
-                :: Two.class Style.classes.imageContainer
-                :: htmlAttribute (Attr.src img.source)
-                :: htmlAttribute (Attr.alt img.description)
-                :: []
-            )
+            [ width fill
+            , height fill
+            , clip
+            , Two.class Style.classes.imageContainer
+            , htmlAttribute (Attr.src img.source)
+            , htmlAttribute (Attr.alt img.description)
+            , case img.onLoad of
+                Just msg ->
+                    htmlAttribute (Event.on "load" (Decode.succeed msg))
+
+                Nothing ->
+                    noAttr
+            ]
             []
         ]
 

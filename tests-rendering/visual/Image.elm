@@ -27,6 +27,7 @@ main =
                 []
                 { source = "https://picsum.photos/id/237/200/300"
                 , description = ""
+                , onLoad = Nothing
                 }
             , Ui.text "A Normal 200/300 image, shrinks to content size with width shrink"
             , Ui.image
@@ -36,6 +37,7 @@ main =
                 ]
                 { source = "https://picsum.photos/id/237/200/300"
                 , description = ""
+                , onLoad = Nothing
                 }
             , Ui.text "Constrained to 100/100"
             , Ui.el
@@ -49,6 +51,7 @@ main =
                     ]
                     { source = "https://picsum.photos/id/237/200/300"
                     , description = ""
+                    , onLoad = Nothing
                     }
                 )
             , Ui.text "Width to 600"
@@ -62,6 +65,7 @@ main =
                     ]
                     { source = "https://picsum.photos/id/237/200/300"
                     , description = ""
+                    , onLoad = Nothing
                     }
                 )
             , Ui.text "Image with fallback (success, no size given)"
