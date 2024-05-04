@@ -111,7 +111,6 @@ classes =
     , italic = "i"
     , strike = "sk"
     , underline = "u"
-    , textUnitalicized = "tun"
     , textJustify = "tj"
     , textJustifyAll = "tja"
     , textCenter = "tc"
