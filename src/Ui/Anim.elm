@@ -14,8 +14,7 @@ module Ui.Anim exposing
     , Step, set, wait, step
     , loop, loopFor
     , onHover, onFocus, onActive
-    , Animator, updateWith, subscription, watching
-    , onTimeline, onTimelineWith
+    , Timeline, onTimeline, onTimelineWith
     , mapAttribute
     )
 
@@ -57,15 +56,16 @@ module Ui.Anim exposing
 
 -- @docs padding, paddingEach, backgroundColor, border, font, height, width
 
--- # Premade animations
 
--- Here are some premade animations.
+# Premade animations
 
--- There's nothing special about them, they're just convenient!
+Here are some premade animations.
 
--- Check out how they're defined if you want to make your own.
+There's nothing special about them, they're just convenient!
 
--- @docs spinning, pulsing, bouncing, pinging
+Check out how they're defined if you want to make your own.
+
+@docs spinning, pulsing, bouncing, pinging
 
 
 # Keyframes
@@ -82,11 +82,9 @@ module Ui.Anim exposing
 @docs onHover, onFocus, onActive
 
 
-# Using Timelines
+# Timelines
 
-@docs Animator, updateWith, subscription, watching
-
-@docs onTimeline, onTimelineWith
+@docs Timeline, onTimeline, onTimelineWith
 
 
 # Mapping
@@ -96,9 +94,8 @@ module Ui.Anim exposing
 -}
 
 import Animator
-import Animator.Timeline exposing (Timeline)
+import Animator.Timeline
 import Animator.Transition
-import Animator.Watcher
 import Color
 import Html
 import Internal.BitEncodings as Bits
@@ -120,21 +117,6 @@ import Ui.Responsive
 {-| -}
 type alias Animated =
     Animator.Attribute
-
-
-
--- {-| -}
--- persistent : String -> String -> Attribute msg
--- persistent group instance =
---     --  attach a class and a message handler for the animation message
---     -- we could also need to gather up any animateable state as well
---     Two.teleport
---         { trigger = onRenderTrigger
---         , class = Teleport.persistentClass group instance
---         , style = []
---         , data =
---             Teleport.persistentId group instance
---         }
 
 
 {-| -}
@@ -174,6 +156,11 @@ withTransition =
 withStepTransition : Transition -> Step -> Step
 withStepTransition =
     Animator.withStepTransition
+
+
+{-| -}
+type alias Timeline state =
+    Animator.Timeline.Timeline state
 
 
 {-| -}
@@ -632,13 +619,8 @@ toReactionAttr identifier trigger incomingCss =
         , identifierClass = identifier
         , class = css.hash
         , style =
-            -- case trigger of
-            --     OnRender ->
             List.filter (\( name, _ ) -> name /= "animation") incomingCss.props
                 ++ props
-
-        -- _ ->
-        -- props
         , data =
             css
                 |> Teleport.encodeChildReaction (triggerPsuedo trigger) identifier incomingCss.hash
@@ -771,53 +753,3 @@ mapAttribute =
 update : (Msg -> msg) -> Msg -> State -> ( State, Cmd msg )
 update =
     Two.update
-
-
-{-| -}
-updateWith :
-    (Msg -> msg)
-    -> Msg
-    -> State
-    ->
-        { ui : State -> model
-        , timelines : Animator msg model
-        }
-    -> ( model, Cmd msg )
-updateWith =
-    Two.updateWith
-
-
-{-| -}
-type alias Animator msg model =
-    Two.Animator msg model
-
-
-{-| -}
-subscription : (Msg -> msg) -> State -> Animator msg model -> model -> Sub msg
-subscription =
-    Two.subscription
-
-
-{-| -}
-watching :
-    { get : model -> Animator.Timeline.Timeline state
-    , set : Animator.Timeline.Timeline state -> model -> model
-    , onStateChange : state -> Maybe msg
-    }
-    -> Animator msg model
-    -> Animator msg model
-watching config anim =
-    { animator = Animator.Watcher.watching config.get config.set anim.animator
-    , onStateChange =
-        -- config.onStateChange << config.get
-        \model ->
-            let
-                future =
-                    []
-
-                -- TODO: wire this up once elm-animator supports Animator.future
-                -- Animator.future (config.get model)
-                -- |> List.map (Tuple.mapSecond anim.onStateChange)
-            in
-            future ++ anim.onStateChange model
-    }

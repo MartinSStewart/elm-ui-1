@@ -2,7 +2,6 @@ module Internal.Model2 exposing (..)
 
 import Animator
 import Animator.Timeline
-import Animator.Watcher
 import Browser.Dom
 import Color
 import Html
@@ -65,44 +64,6 @@ type alias Box =
     , width : Float
     , height : Float
     }
-
-
-type alias Animator msg model =
-    { animator : Animator.Watcher.Watching model
-    , onStateChange : model -> List ( Time.Posix, msg )
-    }
-
-
-updateWith :
-    (Msg -> msg)
-    -> Msg
-    -> State
-    ->
-        { ui : State -> model
-        , timelines : Animator msg model
-        }
-    -> ( model, Cmd msg )
-updateWith toAppMsg msg state config =
-    let
-        ( newState, stateCmd ) =
-            update toAppMsg msg state
-    in
-    ( case msg of
-        Tick newTime ->
-            config.ui newState
-                |> Animator.Watcher.update newTime config.timelines.animator
-
-        _ ->
-            config.ui newState
-    , Cmd.batch
-        [ stateCmd
-        ]
-    )
-
-
-subscription : (Msg -> msg) -> State -> Animator msg model -> model -> Sub msg
-subscription toAppMsg state animator model =
-    Animator.Watcher.toSubscription (toAppMsg << Tick) model animator.animator
 
 
 update : (Msg -> msg) -> Msg -> State -> ( State, Cmd msg )
