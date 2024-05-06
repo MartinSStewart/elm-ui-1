@@ -10,6 +10,7 @@ module Ui.Anim exposing
     , backgroundColor, fontColor, borderColor
     , Transition, withTransition, withStepTransition
     , linear, spring, bezier
+    , spinning, pulsing, bouncing, pinging
     , keyframes, hoveredWith, focusedWith, activeWith
     , Step, set, wait, step
     , loop, loopFor
@@ -518,6 +519,38 @@ type alias Duration =
 ms : Float -> Duration
 ms =
     Animator.ms
+
+
+{-| -}
+spinning : Duration -> Attribute msg
+spinning dur =
+    Animator.spinning dur
+        |> Animator.toCss
+        |> toAttr OnRender
+
+
+{-| -}
+pulsing : Duration -> Attribute msg
+pulsing dur =
+    Animator.pulsing dur
+        |> Animator.toCss
+        |> toAttr OnRender
+
+
+{-| -}
+bouncing : Duration -> Float -> Attribute msg
+bouncing dur distance =
+    Animator.bouncing dur distance
+        |> Animator.toCss
+        |> toAttr OnRender
+
+
+{-| -}
+pinging : Duration -> Attribute msg
+pinging dur =
+    Animator.pinging dur
+        |> Animator.toCss
+        |> toAttr OnRender
 
 
 
