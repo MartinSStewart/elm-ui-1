@@ -1,7 +1,6 @@
 module Internal.Model2 exposing (..)
 
 import Animator
-import Animator.Timeline
 import Browser.Dom
 import Color
 import Html
