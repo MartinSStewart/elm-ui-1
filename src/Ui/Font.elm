@@ -390,7 +390,7 @@ weight i =
 {-| -}
 bold : Attribute msg
 bold =
-    Internal.style "font-weight" "400"
+    Internal.style "font-weight" "700"
 
 
 
