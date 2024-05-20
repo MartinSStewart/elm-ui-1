@@ -1431,7 +1431,11 @@ analyze has encoded inheritance attrs =
         (Attribute { flag, attr }) :: remain ->
             let
                 previouslyRendered =
-                    if BitField.fieldEqual flag Flag.skip then
+                    -- We skip padding here as well because
+                    --  1. it's supposed to accumulate, e.g. you set padding-left/padding-right and they should stack
+                    --  2. But we can't use `skip` because we want to identify stuff by flag
+                    --      to pull it out to use in multiline inputs.  See Ui.Input.multiline
+                    if BitField.fieldEqual flag Flag.skip || BitField.fieldEqual flag Flag.padding then
                         False
 
                     else

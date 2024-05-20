@@ -1001,13 +1001,14 @@ move pos =
 {-| -}
 padding : Int -> Attribute msg
 padding x =
-    Two.style "padding" (String.fromInt x ++ "px")
+    Two.styleWith Flag.padding "padding" (String.fromInt x ++ "px")
 
 
 {-| -}
 paddingXY : Int -> Int -> Attribute msg
 paddingXY x y =
-    Two.style "padding"
+    Two.styleWith Flag.padding
+        "padding"
         ((String.fromInt y ++ "px ")
             ++ (String.fromInt x ++ "px")
         )
@@ -1016,25 +1017,25 @@ paddingXY x y =
 {-| -}
 paddingLeft : Int -> Attribute msg
 paddingLeft x =
-    Two.style "padding-left" (String.fromInt x ++ "px")
+    Two.styleWith Flag.padding "padding-left" (String.fromInt x ++ "px")
 
 
 {-| -}
 paddingRight : Int -> Attribute msg
 paddingRight x =
-    Two.style "padding-right" (String.fromInt x ++ "px")
+    Two.styleWith Flag.padding "padding-right" (String.fromInt x ++ "px")
 
 
 {-| -}
 paddingTop : Int -> Attribute msg
 paddingTop x =
-    Two.style "padding-top" (String.fromInt x ++ "px")
+    Two.styleWith Flag.padding "padding-top" (String.fromInt x ++ "px")
 
 
 {-| -}
 paddingBottom : Int -> Attribute msg
 paddingBottom x =
-    Two.style "padding-bottom" (String.fromInt x ++ "px")
+    Two.styleWith Flag.padding "padding-bottom" (String.fromInt x ++ "px")
 
 
 {-| A record that is used to set padding or border widths individually.

@@ -770,76 +770,64 @@ textHelper textInput attrs textOptions =
     let
         withDefaults =
             defaultTextBoxStyle2 ++ attrs
+    in
+    case textInput.type_ of
+        TextArea ->
+            let
+                padding =
+                    List.filter (Two.ifFlag (BitField.fieldEqual Flag.padding)) withDefaults
 
-        inputElement =
-            Two.element
-                (case textInput.type_ of
-                    TextInputNode _ ->
-                        Two.NodeAsInput
-
-                    TextArea ->
+                inputElement =
+                    Two.element
                         Two.NodeAsTextArea
-                )
-                Two.AsEl
-                ((case textInput.type_ of
-                    TextInputNode inputType ->
-                        -- Note: Due to a weird edgecase in...Edge...
-                        -- `type` needs to come _before_ `value`
-                        -- More reading: https://github.com/mdgriffith/elm-ui/pull/94/commits/4f493a27001ccc3cf1f2baa82e092c35d3811876
-                        [ Two.attribute (Html.Attributes.type_ inputType)
-                        , Two.class classes.inputText
-                        ]
-
-                    TextArea ->
-                        [ Two.classWith Flag.overflow Style.classes.clip
-                        , Ui.height Ui.fill
-                        , Two.class classes.inputMultiline
-                        , Two.style "line-height" "inherit"
-                        ]
-                 )
-                    ++ [ Two.attribute (Html.Attributes.value textOptions.text)
-                       , Two.attribute (Html.Events.onInput textOptions.onChange)
-                       , labelAttribute textOptions.label
-                       , Two.attribute (Html.Attributes.spellcheck textInput.spellchecked)
-                       , case textInput.autofill of
+                        Two.AsEl
+                        ([ Two.class classes.inputMultiline
+                         , Two.style "line-height" "inherit"
+                         , Two.style "grid-column" "1 / 2"
+                         , Two.style "grid-row" "1 / 2"
+                         , Two.style "resize" "none"
+                         , Two.style "overflow" "hidden"
+                         , Two.attribute (Html.Attributes.value textOptions.text)
+                         , Two.attribute (Html.Events.onInput textOptions.onChange)
+                         , labelAttribute textOptions.label
+                         , Two.attribute (Html.Attributes.spellcheck textInput.spellchecked)
+                         , case textInput.autofill of
                             Nothing ->
                                 Two.noAttr
 
                             Just fill ->
                                 Two.attribute (Html.Attributes.attribute "autocomplete" fill)
-                       , case textOptions.placeholder of
+                         , case textOptions.placeholder of
                             Nothing ->
                                 Two.noAttr
 
                             Just placeholder ->
                                 Two.attribute (Html.Attributes.placeholder placeholder)
-                       ]
-                    ++ withDefaults
-                )
-                []
-    in
-    case textInput.type_ of
-        TextArea ->
-            let
-                onlyStyleAttrs =
-                    List.map Two.toOnlyStyle withDefaults
+                         ]
+                            ++ padding
+                        )
+                        []
             in
-            -- textarea with height-content means that
-            -- the input element is rendered `inFront` with a transparent background
-            -- Then the input text is rendered as the space filling Ui.
+            -- In order to get growing text areas, we have a grid element and then layer two elements on top of eahc other.
+            --
             Two.element Two.NodeAsDiv
                 Two.AsEl
                 ([ Ui.width Ui.fill
                  , Two.class classes.focusedWithin
                  , Two.class classes.inputMultilineWrapper
                  , Two.style "white-space" "pre-wrap"
-
-                 -- Place the actual input element as a transparent foreground elment
-                 , Ui.inFront inputElement
+                 , Two.style "display" "grid"
                  ]
-                    ++ List.filter (Two.ifFlag isWidthOrHeight) withDefaults
+                    ++ withDefaults
+                    ++ [ Ui.padding 0 ]
                 )
-                [ Ui.el (Ui.height Ui.fill :: Ui.width Ui.fill :: List.filter (Two.ifFlag isWidthOrHeight >> not) onlyStyleAttrs) <|
+                [ Ui.el
+                    (Two.style "grid-column" "1 / 2"
+                        :: Two.style "grid-row" "1 / 2"
+                        :: Two.style "visibility" "hidden"
+                        :: padding
+                    )
+                  <|
                     -- We append a non-breaking space to the end of the content so that newlines don't get chomped.
                     if textOptions.text == "" then
                         -- Without this, firefox will make the text area lose focus
@@ -848,16 +836,38 @@ textHelper textInput attrs textOptions =
 
                     else
                         Ui.text (textOptions.text ++ "\u{00A0}")
+                , inputElement
                 ]
 
-        TextInputNode _ ->
-            inputElement
+        TextInputNode inputType ->
+            Two.element
+                Two.NodeAsInput
+                Two.AsEl
+                -- Note: Due to a weird edgecase in...Edge...
+                -- `type` needs to come _before_ `value`
+                -- More reading: https://github.com/mdgriffith/elm-ui/pull/94/commits/4f493a27001ccc3cf1f2baa82e092c35d3811876
+                ([ Two.attribute (Html.Attributes.type_ inputType)
+                 , Two.class classes.inputText
+                 , Two.attribute (Html.Attributes.value textOptions.text)
+                 , Two.attribute (Html.Events.onInput textOptions.onChange)
+                 , labelAttribute textOptions.label
+                 , Two.attribute (Html.Attributes.spellcheck textInput.spellchecked)
+                 , case textInput.autofill of
+                    Nothing ->
+                        Two.noAttr
 
+                    Just fill ->
+                        Two.attribute (Html.Attributes.attribute "autocomplete" fill)
+                 , case textOptions.placeholder of
+                    Nothing ->
+                        Two.noAttr
 
-isWidthOrHeight : Flag.Flag -> Bool
-isWidthOrHeight flag =
-    BitField.fieldEqual Flag.width flag
-        || BitField.fieldEqual Flag.height flag
+                    Just placeholder ->
+                        Two.attribute (Html.Attributes.placeholder placeholder)
+                 ]
+                    ++ withDefaults
+                )
+                []
 
 
 {-| -}
