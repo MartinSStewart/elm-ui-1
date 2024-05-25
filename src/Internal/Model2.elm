@@ -1,14 +1,11 @@
 module Internal.Model2 exposing (..)
 
-import Animator
-import Browser.Dom
 import Color
 import Html
 import Html.Attributes as Attr
 import Html.Events as Events
 import Html.Keyed
 import Html.Lazy
-import Internal.BitEncodings as Bits
 import Internal.BitField as BitField exposing (BitField)
 import Internal.Bits.Analyze as AnalyzeBits
 import Internal.Bits.Inheritance as Inheritance
@@ -722,7 +719,12 @@ link details =
                 , additionalInheritance = BitField.none
                 , attrs =
                     [ Attr.href details.url
-                    , Attr.rel "noopener noreferrer"
+                    , case details.download of
+                        Nothing ->
+                            Attr.rel "noopener noreferrer"
+
+                        Just _ ->
+                            Attr.class ""
                     , case details.download of
                         Nothing ->
                             if details.newTab then
