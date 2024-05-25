@@ -48,18 +48,51 @@ view model =
 
             -- , Ui.background (Ui.rgba 255 0 255 1)
             ]
-            [ Theme.h1 "Text"
+            [ Ui.el [ Ui.download "https://picsum.photos/200/300" ]
+                (Theme.h1 "Text")
             , Ui.Input.text
                 [ Ui.border 2
                 , Ui.borderColor (Ui.rgba 0 0 0 1)
                 , Ui.rounded 10
 
                 -- , Ui.height Ui.fill
-                , Ui.background (Ui.rgba 255 0 255 1)
+                , Ui.background (Ui.rgba 255 230 255 1)
                 ]
                 { onChange = TextUpdated
                 , text = model.text
                 , placeholder = Just "Type something here..."
+                , label =
+                    Ui.Input.labelHidden "Type something here..."
+                }
+            , Ui.Input.multiline
+                [ Ui.border 2
+                , Ui.borderColor (Ui.rgba 0 0 0 1)
+                , Ui.rounded 10
+
+                -- , Ui.height Ui.fill
+                , Ui.background (Ui.rgba 255 230 255 1)
+                ]
+                { onChange = TextUpdated
+                , text = model.text
+                , placeholder = Just "Type something here..."
+                , spellcheck = False
+                , label =
+                    Ui.Input.labelHidden "Type something here..."
+                }
+            , Ui.Input.multiline
+                [ Ui.border 2
+                , Ui.borderColor (Ui.rgba 0 0 0 1)
+                , Ui.rounded 10
+                , Ui.heightMax 70
+                , Ui.scrollable
+
+                -- , Ui.height Ui.fill
+                , Ui.background (Ui.rgba 255 230 255 1)
+                ]
+                { onChange = TextUpdated
+                , text = model.text
+                , placeholder = Just "Type something here..."
+                , spellcheck = False
                 , label =
                     Ui.Input.labelHidden "Type something here..."
                 }
