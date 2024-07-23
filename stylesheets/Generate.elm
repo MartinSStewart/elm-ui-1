@@ -1030,6 +1030,7 @@ baseSheet =
                 [ Prop "min-height" "min-content"
                 , Descriptor (dot classes.heightExact)
                     [ Prop "flex-basis" "auto"
+                    , Prop "flex-shrink" "0"
                     ]
                 , Descriptor (dot classes.clip)
                     [ Prop "flex-basis" "auto"
@@ -1444,6 +1445,9 @@ elDescription =
         --     [ scrollable [ height fill ] (text "hello")
         -- We want the height fill to translate through the row so that scrollable know show to scroll.
         , Prop "max-height" "100%"
+        ]
+    , Child (dot classes.heightExact)
+        [ Prop "flex-shrink" "0"
         ]
     , Child select.widthFill
         -- width full, but not aligned
