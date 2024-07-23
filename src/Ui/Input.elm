@@ -304,24 +304,6 @@ labelAttribute lbl =
 
 
 {-| -}
-focus :
-    { borderColor : Maybe Ui.Color
-    , backgroundColor : Maybe Ui.Color
-    , shadow :
-        Maybe
-            { x : Float
-            , y : Float
-            , size : Float
-            , blur : Float
-            , color : Ui.Color
-            }
-    }
-    -> Ui.Option
-focus =
-    Two.FocusStyleOption
-
-
-{-| -}
 checkbox :
     List (Attribute msg)
     ->

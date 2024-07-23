@@ -1,16 +1,14 @@
 module Internal.Model2 exposing (..)
 
-import Color
 import Html
 import Html.Attributes as Attr
 import Html.Events as Events
 import Html.Keyed
 import Html.Lazy
-import Internal.BitField as BitField exposing (BitField)
+import Internal.BitField as BitField
 import Internal.Bits.Analyze as AnalyzeBits
 import Internal.Bits.Inheritance as Inheritance
 import Internal.Flag as Flag exposing (Flag)
-import Internal.Style.Generated as Generated
 import Internal.Style2 as Style
 import Internal.Teleport as Teleport
 import Json.Decode as Json
@@ -521,38 +519,38 @@ type Location
     | Trigger
 
 
-type Option
-    = FocusStyleOption FocusStyle
-    | ResponsiveBreakpoints (List Int)
-    | FontAdjustment
-        { family : String
-        , offset : Float
-        , height : Float
+defaultOptions : Options msg
+defaultOptions =
+    Options
+        { breakpoints = Nothing
+        , animation = Nothing
+        , includeStylesheet = True
         }
 
 
-{-| -}
-type alias FocusStyle =
-    { borderColor : Maybe Style.Color
-    , backgroundColor : Maybe Style.Color
-    , shadow :
-        Maybe Style.Shadow
+defaultEmbedOptions : Options msg
+defaultEmbedOptions =
+    Options
+        { breakpoints = Nothing
+        , animation = Nothing
+        , includeStylesheet = True
+        }
+
+
+type Options msg
+    = Options (OptionDetails msg)
+
+
+type alias OptionDetails msg =
+    { breakpoints : Maybe (List Int)
+    , animation : Maybe (Anim msg)
+    , includeStylesheet : Bool
     }
 
 
-focusDefaultStyle : FocusStyle
-focusDefaultStyle =
-    { backgroundColor = Nothing
-    , borderColor = Nothing
-    , shadow =
-        Just
-            { x = 0
-            , y = 0
-            , color =
-                Color.rgb255 155 203 255
-            , blur = 0
-            , size = 3
-            }
+type alias Anim msg =
+    { toMsg : Msg -> msg
+    , state : State
     }
 
 
@@ -924,41 +922,101 @@ type alias Details =
 
 
 renderLayout :
-    { options : List Option
-    , includeStaticStylesheet : Bool
-    }
-    -> State
+    Options msg
     -> List (Attribute msg)
     -> Element msg
     -> Html.Html msg
-renderLayout { options, includeStaticStylesheet } (State state) attrs content =
+renderLayout (Options options) attrs content =
     let
-        rendered =
+        (Element toFinalLayout) =
             element NodeAsDiv
                 AsRoot
-                attrs
+                (case options.animation of
+                    Nothing ->
+                        attrs
+
+                    Just anim ->
+                        onAnimationStart anim.toMsg
+                            :: onAnimationUnmount anim.toMsg
+                            :: attrs
+                )
                 [ Element
                     (\_ ->
                         Html.Keyed.node "div"
                             []
                             [ ( "options", Html.Lazy.lazy renderOptions options )
                             , ( "static"
-                              , if includeStaticStylesheet then
+                              , if options.includeStylesheet then
                                     staticStyles
 
                                 else
                                     Html.text ""
                               )
-                            , ( "keyframes", Html.Lazy.lazy keyframeRules state.keyframes )
-                            , ( "animations", Html.Lazy.lazy styleRules state.rules )
+                            , ( "keyframes"
+                              , Html.Lazy.lazy keyframeRules
+                                    (case options.animation of
+                                        Nothing ->
+                                            []
+
+                                        Just anim ->
+                                            case anim.state of
+                                                State state ->
+                                                    state.keyframes
+                                    )
+                              )
+                            , ( "animations"
+                              , Html.Lazy.lazy styleRules
+                                    (case options.animation of
+                                        Nothing ->
+                                            []
+
+                                        Just animation ->
+                                            case animation.state of
+                                                State state ->
+                                                    state.rules
+                                    )
+                              )
                             ]
                     )
                 , content
                 ]
     in
-    case rendered of
-        Element toFinalLayout ->
-            toFinalLayout zero
+    toFinalLayout zero
+
+
+onAnimationStart : (Msg -> msg) -> Attribute msg
+onAnimationStart onMsg =
+    attribute
+        (Events.on "animationstart"
+            (Json.field "animationName" Json.string
+                |> Json.andThen
+                    (\name ->
+                        case Teleport.stringToTrigger name of
+                            Just trigger ->
+                                Json.map (onMsg << Teleported trigger) Teleport.decode
+
+                            Nothing ->
+                                Json.fail "Nonmatching animation"
+                    )
+            )
+        )
+
+
+onAnimationUnmount : (Msg -> msg) -> Attribute msg
+onAnimationUnmount onMsg =
+    attribute
+        (Events.on "animationcancel"
+            (Json.field "animationName" Json.string
+                |> Json.andThen
+                    (\name ->
+                        if name == "on-dismount" then
+                            Json.map (onMsg << Teleported Teleport.OnDismount) Teleport.decode
+
+                        else
+                            Json.fail "Nonmatching animation"
+                    )
+            )
+        )
 
 
 staticStyles : Html.Html msg
@@ -1907,7 +1965,7 @@ type Breakpoints label
         { default : label
         , breaks : List ( Int, label )
         , total : Int
-        , breakpoints : Option
+        , breakpoints : List Int
         }
 
 
@@ -2029,7 +2087,7 @@ toBreakpoints details =
         { default = details.default
         , breaks = details.breaks
         , total = details.total
-        , breakpoints = ResponsiveBreakpoints (List.map Tuple.first details.breaks)
+        , breakpoints = List.map Tuple.first details.breaks
         }
 
 
@@ -2130,157 +2188,16 @@ renderMediaProps i =
 
 
 {-| -}
-renderOptions : List Option -> Html.Html msg
+renderOptions : OptionDetails msg -> Html.Html msg
 renderOptions opts =
-    Html.div [ Attr.id "elm-ui-responsiveness" ]
-        [ Html.node "style"
-            []
-            (renderOptionItem { breakpoints = False, focus = False } [] opts)
-        ]
-
-
-renderOptionItem :
-    { breakpoints : Bool
-    , focus : Bool
-    }
-    -> List (Html.Html msg)
-    -> List Option
-    -> List (Html.Html msg)
-renderOptionItem alreadyRendered renderedNodes opts =
-    case opts of
-        [] ->
-            renderedNodes
-
-        (FocusStyleOption focus) :: remain ->
-            if alreadyRendered.focus then
-                renderOptionItem alreadyRendered
-                    renderedNodes
-                    remain
-
-            else
-                renderOptionItem { alreadyRendered | focus = True }
-                    (Html.Lazy.lazy renderFocusStyle focus :: renderedNodes)
-                    remain
-
-        (ResponsiveBreakpoints breakpoints) :: remain ->
-            if alreadyRendered.breakpoints then
-                renderOptionItem alreadyRendered
-                    renderedNodes
-                    remain
-
-            else
-                renderOptionItem { alreadyRendered | breakpoints = True }
-                    (Html.Lazy.lazy toMediaQuery breakpoints :: renderedNodes)
-                    remain
-
-        (FontAdjustment adjustment) :: remain ->
-            renderOptionItem alreadyRendered
-                (Html.text (renderFontAdjustment adjustment) :: renderedNodes)
-                remain
-
-
-renderFontAdjustment :
-    { family : String
-    , offset : Float
-    , height : Float
-    }
-    -> String
-renderFontAdjustment adjustment =
-    let
-        fontid =
-            adjustment.family
-
-        sizeAdjustmentRule =
-            ("." ++ fontid)
-                ++ curlyBrackets
-                    [ "font-size:" ++ String.fromFloat adjustment.height ++ "%;"
-                    ]
-    in
-    sizeAdjustmentRule
-        ++ (List.map
-                (\i ->
-                    let
-                        -- offset would be 5 if the line-height is 1.05
-                        offsetInt =
-                            i * 5
-
-                        body =
-                            curlyBrackets
-                                [ "margin-top:" ++ Generated.lineHeightAdjustment i ++ ";"
-                                , "margin-bottom:" ++ Generated.lineHeightAdjustment i ++ ";"
-                                ]
-                    in
-                    (("." ++ fontid ++ " .lh-" ++ String.fromInt offsetInt ++ " .s.p ") ++ body)
-                        ++ (("." ++ fontid ++ " .lh-" ++ String.fromInt offsetInt ++ " .s.t ") ++ body)
-                )
-                (List.range 1 20)
-                |> String.concat
-           )
-
-
-curlyBrackets : List String -> String
-curlyBrackets lines =
-    "{" ++ String.concat lines ++ "}"
-
-
-maybeString : (a -> String) -> Maybe a -> String
-maybeString fn maybeStr =
-    case maybeStr of
+    case opts.breakpoints of
         Nothing ->
-            ""
+            Html.text ""
 
-        Just str ->
-            fn str
-
-
-andAdd : appendable -> appendable -> appendable
-andAdd one two =
-    two ++ one
-
-
-dot : String -> String
-dot str =
-    "." ++ str
-
-
-renderFocusStyle : FocusStyle -> Html.Html msg
-renderFocusStyle focus =
-    let
-        focusProps =
-            "outline: none;"
-                |> andAdd (maybeString (\color -> "border-color: " ++ Style.color color ++ ";") focus.borderColor)
-                |> andAdd
-                    (maybeString (\color -> "background-color: " ++ Style.color color ++ ";") focus.backgroundColor)
-                |> andAdd
-                    (maybeString
-                        (\shadow ->
-                            "box-shadow: "
-                                ++ (Style.singleShadow shadow
-                                    -- { color = shadow.color
-                                    -- , offset =
-                                    --     shadow.offset
-                                    --         |> Tuple.mapFirst toFloat
-                                    --         |> Tuple.mapSecond toFloat
-                                    -- , inset = False
-                                    -- , blur =
-                                    --     toFloat shadow.blur
-                                    -- , size =
-                                    --     toFloat shadow.size
-                                    -- }
-                                   )
-                                ++ ";"
-                        )
-                        focus.shadow
-                    )
-    in
-    Html.text
-        (String.append
-            (String.append
-                (dot Style.classes.focusedWithin ++ ":focus-within")
-                focusProps
-            )
-            (String.append
-                (dot Style.classes.any ++ ":focus .focusable, " ++ dot Style.classes.any ++ ".focusable:focus")
-                focusProps
-            )
-        )
+        Just breakpoints ->
+            Html.div [ Attr.id "elm-ui-responsiveness" ]
+                [ Html.node "style"
+                    []
+                    [ toMediaQuery breakpoints
+                    ]
+                ]

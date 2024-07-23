@@ -1,6 +1,5 @@
 module Ui.Anim exposing
-    ( layout
-    , init, Msg, update, State
+    ( init, update
     , transition, intro, hovered, focused, active
     , Duration, ms
     , Animated, opacity
@@ -24,9 +23,7 @@ module Ui.Anim exposing
 
 # Getting set up
 
-@docs layout
-
-@docs init, Msg, update, State
+@docs init, update
 
 
 # Animations
@@ -54,8 +51,6 @@ module Ui.Anim exposing
 @docs Transition, withTransition, withStepTransition
 
 @docs linear, spring, bezier
-
--- @docs padding, paddingEach, backgroundColor, border, font, height, width
 
 
 # Premade animations
@@ -97,22 +92,12 @@ Check out how they're defined if you want to make your own.
 import Animator
 import Animator.Timeline
 import Animator.Transition
-import Color
-import Html
 import Internal.BitEncodings as Bits
 import Internal.BitField as BitField
-import Internal.Flag as Flag
 import Internal.Model2 as Two
-import Internal.Style2 as Style
 import Internal.Teleport as Teleport
-import InternalAnim.Css as Css
-import Json.Decode as Decode
-import Json.Encode as Encode
 import Set
-import Time
 import Ui exposing (Attribute, Color, Element)
-import Ui.Events
-import Ui.Responsive
 
 
 {-| -}
@@ -479,12 +464,6 @@ z =
     Animator.z
 
 
-{-| -}
-padding : Int -> Animated
-padding p =
-    Animator.int "padding" (toFloat p)
-
-
 
 {- DURATIONS! -}
 
@@ -676,67 +655,7 @@ activeWith steps =
 
 
 {-| -}
-layout :
-    { options : List Ui.Option
-    , toMsg : Msg -> msg
-    , breakpoints : Maybe (Ui.Responsive.Breakpoints label)
-    }
-    -> State
-    -> List (Attribute msg)
-    -> Element msg
-    -> Html.Html msg
-layout opts state attrs els =
-    Two.renderLayout
-        { options =
-            case opts.breakpoints of
-                Just (Two.Responsive breakpoints) ->
-                    breakpoints.breakpoints :: opts.options
-
-                Nothing ->
-                    opts.options
-        , includeStaticStylesheet = True
-        }
-        state
-        (onAnimationStart opts.toMsg
-            :: onAnimationUnmount opts.toMsg
-            :: attrs
-        )
-        els
-
-
-onAnimationStart : (Msg -> msg) -> Ui.Attribute msg
-onAnimationStart onMsg =
-    Ui.Events.on "animationstart"
-        (Decode.field "animationName" Decode.string
-            |> Decode.andThen
-                (\name ->
-                    case Teleport.stringToTrigger name of
-                        Just trigger ->
-                            Decode.map (onMsg << Two.Teleported trigger) Teleport.decode
-
-                        Nothing ->
-                            Decode.fail "Nonmatching animation"
-                )
-        )
-
-
-onAnimationUnmount : (Msg -> msg) -> Ui.Attribute msg
-onAnimationUnmount onMsg =
-    Ui.Events.on "animationcancel"
-        (Decode.field "animationName" Decode.string
-            |> Decode.andThen
-                (\name ->
-                    if name == "on-dismount" then
-                        Decode.map (onMsg << Two.Teleported Teleport.OnDismount) Teleport.decode
-
-                    else
-                        Decode.fail "Nonmatching animation"
-                )
-        )
-
-
-{-| -}
-init : State
+init : Ui.State
 init =
     Two.State
         { added = Set.empty
@@ -746,22 +665,63 @@ init =
 
 
 {-| -}
-type alias State =
-    Two.State
-
-
-{-| -}
-type alias Msg =
-    Two.Msg
-
-
-{-| -}
 mapAttribute : (msg -> msg2) -> Attribute msg -> Attribute msg2
 mapAttribute =
     Two.mapAttr
 
 
 {-| -}
-update : (Msg -> msg) -> Msg -> State -> ( State, Cmd msg )
+update : (Ui.Msg -> msg) -> Ui.Msg -> Ui.State -> ( Ui.State, Cmd msg )
 update =
     Two.update
+
+
+
+{- -}
+
+
+{-| -}
+type View msg
+    = View (ViewDetails msg)
+
+
+{-| -}
+type alias ViewDetails msg =
+    { key : String
+    , visible : Bool
+    , content : Element msg
+    , beforeFocus : List Animated
+    , afterFocus : List Animated
+    }
+
+
+{-| -}
+fluid :
+    List (Attribute msg)
+    ->
+        { id : String
+        , options : List (View msg)
+        }
+    -> Element msg
+fluid attrs { id, options } =
+    Two.element Two.NodeAsDiv
+        Two.AsEl
+        (Ui.width Ui.fill :: attrs)
+        (List.map
+            (\(View viewOptions) ->
+                Ui.el [] viewOptions.content
+            )
+            options
+        )
+
+
+{-| -}
+view : Bool -> String -> Element msg -> View msg
+view visible key content =
+    View
+        { key = key
+        , visible = visible
+        , content = content
+        , beforeFocus = []
+        , afterFocus = []
+        }

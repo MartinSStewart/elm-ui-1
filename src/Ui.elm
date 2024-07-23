@@ -1,5 +1,6 @@
 module Ui exposing
-    ( layout, embed, Option
+    ( layout, Options, default, withBreakpoints, withNoStylesheet
+    , withAnimation, Msg, State
     , Element, none, text, el
     , row, column, wrap
     , id, noAttr, attrIf
@@ -34,7 +35,9 @@ module Ui exposing
 
 # Getting started
 
-@docs layout, embed, Option
+@docs layout, Options, default, withBreakpoints, withNoStylesheet
+
+@docs withAnimation, Msg, State
 
 
 # Basic Elements
@@ -230,6 +233,7 @@ import Internal.Model2 as Two
 import Internal.Style2 as Style
 import Json.Decode as Decode
 import Set
+import Ui.Responsive
 
 
 {-| -}
@@ -332,40 +336,65 @@ portion i =
     Fill (max 1 i)
 
 
-{-| This is your top level node where you can turn `Element` into `Html`.
--}
-layout : List (Attribute msg) -> Element msg -> Html msg
-layout attrs content =
-    Two.renderLayout
-        { options = []
-        , includeStaticStylesheet = True
-        }
-        emptyState
-        attrs
-        content
+{-| -}
+type alias Options msg =
+    Two.Options msg
 
 
-emptyState : Two.State
-emptyState =
+{-| -}
+default : Options msg
+default =
+    Two.defaultOptions
+
+
+{-| -}
+withBreakpoints : Ui.Responsive.Breakpoints label -> Options msg -> Options msg
+withBreakpoints (Two.Responsive breaks) (Two.Options opts) =
+    Two.Options { opts | breakpoints = Just breaks.breakpoints }
+
+
+{-| -}
+type alias State =
     Two.State
-        { added = Set.empty
-        , rules = []
-        , keyframes = []
-        }
 
 
-{-| Converts an `Element msg` to an `Html msg` but does not include the stylesheet.
+{-| -}
+type alias Msg =
+    Two.Msg
 
-You'll need to include it manually yourself
+
+{-| Before every, you'll need to set the `animation` option on your layout. This looks like this
+
+    Ui.layout
+        (Ui.default
+            |> Ui.withAnimation
+                { toMsg = Ui
+                , state = model.ui
+                }
+        )
+        []
 
 -}
-embed : List (Attribute msg) -> Element msg -> Html msg
-embed attrs content =
-    Two.renderLayout
-        { options = []
-        , includeStaticStylesheet = False
-        }
-        emptyState
+withAnimation :
+    { toMsg : Msg -> msg
+    , state : State
+    }
+    -> Options msg
+    -> Options msg
+withAnimation config (Two.Options opts) =
+    Two.Options { opts | animation = Just config }
+
+
+{-| -}
+withNoStylesheet : Options msg -> Options msg
+withNoStylesheet (Two.Options opts) =
+    Two.Options { opts | includeStylesheet = False }
+
+
+{-| -}
+layout : Options msg -> List (Attribute msg) -> Element msg -> Html msg
+layout opts attrs content =
+    Two.renderLayout opts
         attrs
         content
 
@@ -386,11 +415,6 @@ styleRules styleStr =
             []
             [ Html.text (String.join "\n" styleStr) ]
         ]
-
-
-{-| -}
-type alias Option =
-    Two.Option
 
 
 {-| When you want to render exactly nothing.
