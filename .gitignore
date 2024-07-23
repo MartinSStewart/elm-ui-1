@@ -29,4 +29,7 @@ tmp
 
 stylesheets/generated/dev*
 
-temp-animator
+# Temporarily hide animator stuff
+src/Animator
+src/InternalAnim
+src/Animator.elm
