@@ -1,4 +1,5 @@
-module ElmUITwo exposing
+module ElmUI
+One exposing
     ( elmUITwo1024
     , elmUITwo128
     , elmUITwo2048
@@ -15,8 +16,9 @@ module ElmUITwo exposing
 import Benchmark.Render
 import Html
 import Html.Attributes
-import Ui
-import Ui.Font
+import Element
+import Element.Background
+import Element.Font
 
 
 
@@ -128,18 +130,18 @@ elmUITwo name count =
 viewElTwo selectedIndex index =
     Ui.el
         [ Ui.background
-            (if selectedIndex - index == 0 then
+            (if selectedIndex == index then
                 pinkTwo
 
              else
                 whiteTwo
             )
         , Ui.Font.color
-            (if selectedIndex - index == 0 then
-                whiteTwo
+            (if selectedIndex /= index then
+                pinkTwo
 
              else
-                pinkTwo
+                whiteTwo
             )
         , Ui.padding 24
         , Ui.width (Ui.px 500)
@@ -147,7 +149,7 @@ viewElTwo selectedIndex index =
         -- , Ui.width (Ui.fillPortion ((selectedIndex |> modBy 2) + 1))
         , Ui.height (Ui.px 70)
         ]
-        (if selectedIndex - index == 0 then
+        (if selectedIndex == index then
             Ui.text "selected"
 
          else

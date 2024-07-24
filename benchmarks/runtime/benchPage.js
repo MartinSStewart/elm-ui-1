@@ -6,19 +6,20 @@ async function benchPage(page, file) {
     // await page.tracing.start({ path: 'trace.json' });
     await page.goto('file://' + path.resolve(file))
 
-    await page.waitFor(5000);
+    await sleep(1000);
     // await page.tracing.stop();
+    // https://pptr.dev/api/puppeteer.page.metrics
     const metrics = await client.send('Performance.getMetrics');
 
     const startMetrics = await page.metrics()
     await page.evaluate(() => { window.elmRefresh() })
-    await page.waitFor(1500);
+    await sleep(1500);
     const endMetrics = await page.metrics()
 
     await page.evaluate(() => { window.elmStartAnim() })
-    await sleep(5000)
+    await sleep(2000)
     await page.evaluate(() => { window.elmStopAnim() })
-    await page.waitFor(2000);
+    await sleep(10);
     const finalMetrics = await page.metrics()
     const frames = await page.evaluate(x => {
         return Promise.resolve(window.metrics);
@@ -44,6 +45,7 @@ async function benchPage(page, file) {
 }
 
 function summarize(frames) {
+
     return {
         count: frames.length,
         median: median(frames),

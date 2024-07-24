@@ -1,23 +1,5 @@
 module ManyElements exposing
-    ( elmUI1024
-    , elmUI128
-    , elmUI2048
-    , elmUI24
-    , elmUI256
-    , elmUI4096
-    , elmUI512
-    , elmUI64
-    , elmUI8192
-    , elmUIVCSS1024
-    , elmUIVCSS128
-    , elmUIVCSS2048
-    , elmUIVCSS24
-    , elmUIVCSS256
-    , elmUIVCSS4096
-    , elmUIVCSS512
-    , elmUIVCSS64
-    , elmUIVCSS8192
-    , viewHtml1024
+    ( viewHtml1024
     , viewHtml128
     , viewHtml2048
     , viewHtml24
@@ -39,115 +21,74 @@ module ManyElements exposing
 
 {-| -}
 
+-- import Element exposing (..)
+-- import Element.Background as Background
+-- import Element.Font as Font
+-- import Element.Keyed
+
 import Benchmark.Render
-import Element exposing (..)
-import Element.Background as Background
-import Element.Font as Font
-import Element.Keyed
 import Html
 import Html.Attributes
-import Internal.Model as Internal
 
 
 
+-- import Internal.Model as Internal
 {- START BENCHMARKS -}
-
-
-elmUI24 : Benchmark.Render.Benchmark Model Msg
-elmUI24 =
-    elmUI "elmUI24" 24
-
-
-elmUI64 : Benchmark.Render.Benchmark Model Msg
-elmUI64 =
-    elmUI "elmUI64" 64
-
-
-elmUI128 : Benchmark.Render.Benchmark Model Msg
-elmUI128 =
-    elmUI "elmUI128" 128
-
-
-elmUI256 : Benchmark.Render.Benchmark Model Msg
-elmUI256 =
-    elmUI "elmUI256" 256
-
-
-elmUI512 : Benchmark.Render.Benchmark Model Msg
-elmUI512 =
-    elmUI "elmUI512" 512
-
-
-elmUI1024 : Benchmark.Render.Benchmark Model Msg
-elmUI1024 =
-    elmUI "elmUI1024" 1024
-
-
-elmUI2048 : Benchmark.Render.Benchmark Model Msg
-elmUI2048 =
-    elmUI "elmUI2048" 2048
-
-
-elmUI4096 : Benchmark.Render.Benchmark Model Msg
-elmUI4096 =
-    elmUI "elmUI4096" 4096
-
-
-elmUI8192 : Benchmark.Render.Benchmark Model Msg
-elmUI8192 =
-    elmUI "elmUI8192" 8192
-
-
-
-{- Elm UI VirtualCSS -}
-
-
-elmUIVCSS24 : Benchmark.Render.Benchmark Model Msg
-elmUIVCSS24 =
-    elmUIVCSS "elmUIVCSS24" 24
-
-
-elmUIVCSS64 : Benchmark.Render.Benchmark Model Msg
-elmUIVCSS64 =
-    elmUIVCSS "elmUIVCSS64" 64
-
-
-elmUIVCSS128 : Benchmark.Render.Benchmark Model Msg
-elmUIVCSS128 =
-    elmUIVCSS "elmUIVCSS128" 128
-
-
-elmUIVCSS256 : Benchmark.Render.Benchmark Model Msg
-elmUIVCSS256 =
-    elmUIVCSS "elmUIVCSS256" 256
-
-
-elmUIVCSS512 : Benchmark.Render.Benchmark Model Msg
-elmUIVCSS512 =
-    elmUIVCSS "elmUIVCSS512" 512
-
-
-elmUIVCSS1024 : Benchmark.Render.Benchmark Model Msg
-elmUIVCSS1024 =
-    elmUIVCSS "elmUIVCSS1024" 1024
-
-
-elmUIVCSS2048 : Benchmark.Render.Benchmark Model Msg
-elmUIVCSS2048 =
-    elmUIVCSS "elmUIVCSS2048" 2048
-
-
-elmUIVCSS4096 : Benchmark.Render.Benchmark Model Msg
-elmUIVCSS4096 =
-    elmUIVCSS "elmUIVCSS4096" 4096
-
-
-elmUIVCSS8192 : Benchmark.Render.Benchmark Model Msg
-elmUIVCSS8192 =
-    elmUIVCSS "elmUIVCSS8192" 8192
-
-
-
+-- elmUI24 : Benchmark.Render.Benchmark Model Msg
+-- elmUI24 =
+--     elmUI "elmUI24" 24
+-- elmUI64 : Benchmark.Render.Benchmark Model Msg
+-- elmUI64 =
+--     elmUI "elmUI64" 64
+-- elmUI128 : Benchmark.Render.Benchmark Model Msg
+-- elmUI128 =
+--     elmUI "elmUI128" 128
+-- elmUI256 : Benchmark.Render.Benchmark Model Msg
+-- elmUI256 =
+--     elmUI "elmUI256" 256
+-- elmUI512 : Benchmark.Render.Benchmark Model Msg
+-- elmUI512 =
+--     elmUI "elmUI512" 512
+-- elmUI1024 : Benchmark.Render.Benchmark Model Msg
+-- elmUI1024 =
+--     elmUI "elmUI1024" 1024
+-- elmUI2048 : Benchmark.Render.Benchmark Model Msg
+-- elmUI2048 =
+--     elmUI "elmUI2048" 2048
+-- elmUI4096 : Benchmark.Render.Benchmark Model Msg
+-- elmUI4096 =
+--     elmUI "elmUI4096" 4096
+-- elmUI8192 : Benchmark.Render.Benchmark Model Msg
+-- elmUI8192 =
+--     elmUI "elmUI8192" 8192
+-- {- Elm UI VirtualCSS -}
+-- elmUIVCSS24 : Benchmark.Render.Benchmark Model Msg
+-- elmUIVCSS24 =
+--     elmUIVCSS "elmUIVCSS24" 24
+-- elmUIVCSS64 : Benchmark.Render.Benchmark Model Msg
+-- elmUIVCSS64 =
+--     elmUIVCSS "elmUIVCSS64" 64
+-- elmUIVCSS128 : Benchmark.Render.Benchmark Model Msg
+-- elmUIVCSS128 =
+--     elmUIVCSS "elmUIVCSS128" 128
+-- elmUIVCSS256 : Benchmark.Render.Benchmark Model Msg
+-- elmUIVCSS256 =
+--     elmUIVCSS "elmUIVCSS256" 256
+-- elmUIVCSS512 : Benchmark.Render.Benchmark Model Msg
+-- elmUIVCSS512 =
+--     elmUIVCSS "elmUIVCSS512" 512
+-- elmUIVCSS1024 : Benchmark.Render.Benchmark Model Msg
+-- elmUIVCSS1024 =
+--     elmUIVCSS "elmUIVCSS1024" 1024
+-- elmUIVCSS2048 : Benchmark.Render.Benchmark Model Msg
+-- elmUIVCSS2048 =
+--     elmUIVCSS "elmUIVCSS2048" 2048
+-- elmUIVCSS4096 : Benchmark.Render.Benchmark Model Msg
+-- elmUIVCSS4096 =
+--     elmUIVCSS "elmUIVCSS4096" 4096
+-- elmUIVCSS8192 : Benchmark.Render.Benchmark Model Msg
+-- elmUIVCSS8192 =
+--     elmUIVCSS "elmUIVCSS8192" 8192
 {- Normal Html -}
 
 
@@ -261,127 +202,108 @@ type Msg
     | Tick Float
 
 
-{-| -}
-elmUIVCSS : String -> Int -> Benchmark.Render.Benchmark Model Msg
-elmUIVCSS name count =
-    { name = name
-    , init =
-        { index = 0
-        , numberOfElements = count
-        , elements = List.range 0 (count - 1)
-        }
-    , view =
-        \model ->
-            Element.layoutWith
-                { options =
-                    [ Internal.RenderModeOption
-                        Internal.WithVirtualCss
-                    ]
-                }
-                []
-                (Element.column [ spacing 8, centerX ]
-                    (List.map (viewEl model.index) model.elements)
-                )
-    , update =
-        \msg model ->
-            case msg of
-                Refresh ->
-                    if model.index > model.numberOfElements then
-                        { model | index = 0 }
 
-                    else
-                        { model | index = model.index + 1 }
-
-                Tick i ->
-                    if model.index > model.numberOfElements then
-                        { model | index = 0 }
-
-                    else
-                        { model | index = model.index + 1 }
-    , tick = Tick
-    , refresh = Refresh
-    }
-
-
-{-| -}
-elmUI : String -> Int -> Benchmark.Render.Benchmark Model Msg
-elmUI name count =
-    { name = name
-    , init =
-        { index = 0
-        , numberOfElements = count
-        , elements = List.range 0 (count - 1)
-        }
-    , view =
-        \model ->
-            Element.layout []
-                (Element.column
-                    [ spacing 8
-                    , centerX
-                    ]
-                    (List.map (viewEl model.index) model.elements)
-                )
-    , update =
-        \msg model ->
-            case msg of
-                Refresh ->
-                    if model.index > model.numberOfElements then
-                        { model | index = 0 }
-
-                    else
-                        { model | index = model.index + 1 }
-
-                Tick i ->
-                    if model.index > model.numberOfElements then
-                        { model | index = 0 }
-
-                    else
-                        { model | index = model.index + 1 }
-    , tick = Tick
-    , refresh = Refresh
-    }
-
-
-viewEl selectedIndex index =
-    el
-        [ Background.color
-            (if selectedIndex == index then
-                pink
-
-             else
-                white
-            )
-        , Font.color
-            (if selectedIndex /= index then
-                pink
-
-             else
-                white
-            )
-        , padding 24
-        , width (px 500)
-
-        -- , width (fillPortion ((selectedIndex |> modBy 2) + 1))
-        , height (px 70)
-        ]
-        (if selectedIndex == index then
-            text "selected"
-
-         else
-            text "Hello!"
-        )
-
-
-white =
-    rgb 1 1 1
-
-
-pink =
-    rgb255 240 0 245
-
-
-pinkish i =
-    rgb255 (wrap255 (i + 240)) 0 245
+-- {-| -}
+-- elmUIVCSS : String -> Int -> Benchmark.Render.Benchmark Model Msg
+-- elmUIVCSS name count =
+--     { name = name
+--     , init =
+--         { index = 0
+--         , numberOfElements = count
+--         , elements = List.range 0 (count - 1)
+--         }
+--     , view =
+--         \model ->
+--             Element.layoutWith
+--                 { options =
+--                     [ Internal.RenderModeOption
+--                         Internal.WithVirtualCss
+--                     ]
+--                 }
+--                 []
+--                 (Element.column [ spacing 8, centerX ]
+--                     (List.map (viewEl model.index) model.elements)
+--                 )
+--     , update =
+--         \msg model ->
+--             case msg of
+--                 Refresh ->
+--                     if model.index > model.numberOfElements then
+--                         { model | index = 0 }
+--                     else
+--                         { model | index = model.index + 1 }
+--                 Tick i ->
+--                     if model.index > model.numberOfElements then
+--                         { model | index = 0 }
+--                     else
+--                         { model | index = model.index + 1 }
+--     , tick = Tick
+--     , refresh = Refresh
+--     }
+-- {-| -}
+-- elmUI : String -> Int -> Benchmark.Render.Benchmark Model Msg
+-- elmUI name count =
+--     { name = name
+--     , init =
+--         { index = 0
+--         , numberOfElements = count
+--         , elements = List.range 0 (count - 1)
+--         }
+--     , view =
+--         \model ->
+--             Element.layout []
+--                 (Element.column
+--                     [ spacing 8
+--                     , centerX
+--                     ]
+--                     (List.map (viewEl model.index) model.elements)
+--                 )
+--     , update =
+--         \msg model ->
+--             case msg of
+--                 Refresh ->
+--                     if model.index > model.numberOfElements then
+--                         { model | index = 0 }
+--                     else
+--                         { model | index = model.index + 1 }
+--                 Tick i ->
+--                     if model.index > model.numberOfElements then
+--                         { model | index = 0 }
+--                     else
+--                         { model | index = model.index + 1 }
+--     , tick = Tick
+--     , refresh = Refresh
+--     }
+-- viewEl selectedIndex index =
+--     el
+--         [ Background.color
+--             (if selectedIndex == index then
+--                 pink
+--              else
+--                 white
+--             )
+--         , Font.color
+--             (if selectedIndex /= index then
+--                 pink
+--              else
+--                 white
+--             )
+--         , padding 24
+--         , width (px 500)
+--         -- , width (fillPortion ((selectedIndex |> modBy 2) + 1))
+--         , height (px 70)
+--         ]
+--         (if selectedIndex == index then
+--             text "selected"
+--          else
+--             text "Hello!"
+--         )
+-- white =
+--     rgb 1 1 1
+-- pink =
+--     rgb255 240 0 245
+-- pinkish i =
+--     rgb255 (wrap255 (i + 240)) 0 245
 
 
 wrap255 i =

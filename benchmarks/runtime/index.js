@@ -3,6 +3,7 @@ const benchPage = require("./benchPage");
 const chalk = require("chalk");
 var compileToString = require("node-elm-compiler").compileToString;
 const fs = require("fs");
+const { exec } = require("child_process");
 
 function write_entrypoint(item) {
   const entrypoint = `module Main exposing (main)
@@ -11,18 +12,7 @@ import Benchmark.Render
 
 main = Benchmark.Render.toProgram ${item.module}.${item.value}
 `;
-  fs.writeFileSync("./benchmarks/tmp/Main.elm", entrypoint);
-}
-
-async function compile_and_embed(config) {
-  var template = fs.readFileSync(config.template);
-  // we embed the compiled js to avoid having to start a server to read the app.
-  await compileToString(config.elm, config.elmOptions).then(function (
-    compiled_elm_code
-  ) {
-    const compiled = eval(`\`${template}\``);
-    fs.writeFileSync(config.target, compiled);
-  });
+  fs.writeFileSync("./tmp/Main.elm", entrypoint);
 }
 
 function regroupResults(results) {
@@ -66,46 +56,31 @@ function regroupResults(results) {
   return Object.values(regrouped);
 }
 
-var contain = [
-  { module: "Contain", group: "html", count: 1024, value: "viewHtml8192" },
-  {
-    module: "Contain",
-    group: "contain",
-    count: 128,
-    value: "viewHtmlContain8192",
-  },
-];
-
 async function writeResults(allResults, resultsDir, name) {
   if (!fs.existsSync(resultsDir)) {
     fs.mkdirSync(resultsDir);
   }
   var results = JSON.stringify(allResults);
-  var template = fs.readFileSync(
-    "./benchmarks/runtime/template/viewResults.html"
-  );
+  var template = fs.readFileSync("./runtime/template/viewResults.html");
   // we embed the compiled js to avoid having to start a server to read the app.
   await compileToString(["./src/View/Results.elm"], {
     optimize: true,
-    cwd: "./benchmarks",
   }).then(function (compiled_elm_code) {
     const compiled = eval(`\`${template}\``);
     fs.writeFileSync(`./${resultsDir}/${name}/index.html`, compiled);
   });
-
-  // fs.writeFileSync(`./${resultsDir}/1.1.1-candidate-optimized.json`, results)
 }
 
 (async () => {
   const browser = await puppeteer.launch();
 
   var instances = [
-    { module: "ManyElements", group: "elmUI", count: 1024, value: "elmUI1024" },
-    { module: "ManyElements", group: "elmUI", count: 128, value: "elmUI128" },
-    { module: "ManyElements", group: "elmUI", count: 2048, value: "elmUI2048" },
-    { module: "ManyElements", group: "elmUI", count: 24, value: "elmUI24" },
-    { module: "ManyElements", group: "elmUI", count: 4096, value: "elmUI4096" },
-    { module: "ManyElements", group: "elmUI", count: 8192, value: "elmUI8192" },
+    // { module: "ManyElements", group: "elmUI", count: 1024, value: "elmUI1024" },
+    // { module: "ManyElements", group: "elmUI", count: 128, value: "elmUI128" },
+    // { module: "ManyElements", group: "elmUI", count: 2048, value: "elmUI2048" },
+    // { module: "ManyElements", group: "elmUI", count: 24, value: "elmUI24" },
+    // { module: "ManyElements", group: "elmUI", count: 4096, value: "elmUI4096" },
+    // { module: "ManyElements", group: "elmUI", count: 8192, value: "elmUI8192" },
     {
       module: "ElmUITwo",
       group: "elmUITwo",
@@ -142,36 +117,36 @@ async function writeResults(allResults, resultsDir, name) {
       count: 8192,
       value: "elmUITwo8192",
     },
-    {
-      module: "ManyElements",
-      group: "elmUIVCSS",
-      count: 1024,
-      value: "elmUIVCSS1024",
-    },
-    {
-      module: "ManyElements",
-      group: "elmUIVCSS",
-      count: 2048,
-      value: "elmUIVCSS2048",
-    },
-    {
-      module: "ManyElements",
-      group: "elmUIVCSS",
-      count: 24,
-      value: "elmUIVCSS24",
-    },
-    {
-      module: "ManyElements",
-      group: "elmUIVCSS",
-      count: 4096,
-      value: "elmUIVCSS4096",
-    },
-    {
-      module: "ManyElements",
-      group: "elmUIVCSS",
-      count: 8192,
-      value: "elmUIVCSS8192",
-    },
+    // {
+    //   module: "ManyElements",
+    //   group: "elmUIVCSS",
+    //   count: 1024,
+    //   value: "elmUIVCSS1024",
+    // },
+    // {
+    //   module: "ManyElements",
+    //   group: "elmUIVCSS",
+    //   count: 2048,
+    //   value: "elmUIVCSS2048",
+    // },
+    // {
+    //   module: "ManyElements",
+    //   group: "elmUIVCSS",
+    //   count: 24,
+    //   value: "elmUIVCSS24",
+    // },
+    // {
+    //   module: "ManyElements",
+    //   group: "elmUIVCSS",
+    //   count: 4096,
+    //   value: "elmUIVCSS4096",
+    // },
+    // {
+    //   module: "ManyElements",
+    //   group: "elmUIVCSS",
+    //   count: 8192,
+    //   value: "elmUIVCSS8192",
+    // },
     {
       module: "ManyElements",
       group: "viewHtml",
@@ -234,18 +209,13 @@ async function writeResults(allResults, resultsDir, name) {
     },
   ];
 
-  var dir = "tmp";
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir);
-  }
-
-  var dir = "./benchmarks/tmp";
+  var dir = "./tmp";
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir);
   }
 
   var allResults = [];
-  const resultsDir = "benchmarks/results";
+  const resultsDir = "results";
   const resultName = "1.2-cand";
 
   if (!fs.existsSync(`./${resultsDir}/${resultName}/instances/`)) {
@@ -259,31 +229,77 @@ async function writeResults(allResults, resultsDir, name) {
   for (var i = 0; i < instances.length; i++) {
     var item = instances[i];
     write_entrypoint(item);
-    const test_file = `${resultsDir}/${resultName}/instances/${item.value}.html`;
-    var template = fs.readFileSync("./benchmarks/runtime/template/run.html");
-    var cssom = fs.readFileSync("./experiments/virtual-css/cssom.js");
-    // we embed the compiled js to avoid having to start a server to read the app.
-    await compileToString(["tmp/Main.elm"], {
-      optimize: true,
-      cwd: "./benchmarks",
-    }).then(function (compiled_elm_code) {
-      const compiled = eval(`\`${template}\``);
-      fs.writeFileSync(test_file, compiled);
+
+    // Prepare directories
+    const jsDir = `${resultsDir}/${resultName}/instances/js`;
+    if (!fs.existsSync(jsDir)) {
+      fs.mkdirSync(jsDir, { recursive: true });
+    }
+
+    const jsCompileDir = `./results/${resultName}/instances/js`;
+
+    // 1. Compile Elm to JS using elm make
+    const jsFile = `${jsCompileDir}/${item.value}.js`;
+    await new Promise((resolve, reject) => {
+      const elmMakeCmd = `elm make --optimize --output=${jsFile} tmp/Main.elm`;
+      exec(elmMakeCmd, {}, (error, stdout, stderr) => {
+        if (error) reject(error);
+        else resolve();
+      });
     });
 
+    // 2. Create HTML file
+    const htmlFile = `${resultsDir}/${resultName}/instances/${item.value}.html`;
+    var template = fs.readFileSync("./runtime/template/run.html", "utf8");
+
+    const compiled = `${template}`.replace(
+      "${elm_file_name}",
+      `js/${item.value}.js`
+    );
+    fs.writeFileSync(htmlFile, compiled);
+
+    // 3. Compile Elm to JS using elm-optimize-level-2
+    const jsFileOpt2 = `${jsCompileDir}/${item.value}-opt-2.js`;
+    await new Promise((resolve, reject) => {
+      const elmOptCmd = `elm-optimize-level-2 --output=${jsFileOpt2} tmp/Main.elm`;
+      exec(elmOptCmd, {}, (error, stdout, stderr) => {
+        if (error) reject(error);
+        else resolve();
+      });
+    });
+
+    // 4. Create HTML file for elm-optimize-level-2 version
+    const htmlFileOpt2 = `${resultsDir}/${resultName}/instances/${item.value}-opt-2.html`;
+    const compiledOpt2 = `${template}`.replace(
+      "${elm_file_name}",
+      `js/${item.value}-opt-2.js`
+    );
+    fs.writeFileSync(htmlFileOpt2, compiledOpt2);
+
+    // Benchmark both versions
     const page = await browser.newPage();
-    const results = await benchPage(page, test_file);
+    const results = await benchPage(page, htmlFile);
     results.group = item.group;
     results.count = item.count;
+    allResults.push(results);
     await page.close();
-    // console.log(results)
+
+    const pageOpt2 = await browser.newPage();
+    const resultsOpt2 = await benchPage(pageOpt2, htmlFileOpt2);
+    resultsOpt2.group = `${item.group}-opt-2`;
+    resultsOpt2.count = item.count;
+    allResults.push(resultsOpt2);
+    await pageOpt2.close();
+
     console.log(
       "    Benchmark of " +
         chalk.green(`${item.module}.${item.value}`) +
+        " and " +
+        chalk.green(`${item.module}.${item.value}-opt-2`) +
         " complete"
     );
-    allResults.push(results);
   }
+
   await browser.close();
 
   allResults = regroupResults(allResults);
