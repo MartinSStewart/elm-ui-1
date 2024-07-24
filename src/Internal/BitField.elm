@@ -6,6 +6,7 @@ module Internal.BitField exposing
     , has, equal
     , fieldEqual
     , isZeroLength
+    , mergeField
     )
 
 {-|
@@ -89,6 +90,29 @@ type BitField encoding
         , length : Int
         , mask : Int
         , inverseMask : Int
+        }
+
+
+mergeField : BitField encoding -> BitField encoding -> BitField encoding
+mergeField (BitField one) (BitField two) =
+    let
+        newMask =
+            Bitwise.or one.mask two.mask
+
+        newOffset =
+            min one.offset two.offset
+
+        newLen =
+            max
+                (two.offset + two.length)
+                (one.offset + one.length)
+                - newOffset
+    in
+    BitField
+        { offset = newOffset
+        , length = newLen
+        , mask = newMask
+        , inverseMask = Bitwise.complement newMask
         }
 
 

@@ -81,17 +81,26 @@ const base = `import Internal.BitField as BitField exposing (BitField, Bits)
 type IsFlag = IsFlag
 
 
-type alias Field
-    = Bits
+type alias Field =
+    Bits
 
 
-type alias Flag
-    = BitField IsFlag
+type alias Flag =
+    BitField IsFlag
 
 
 none : Field
 none =
     BitField.init
+
+
+merge : Flag -> Flag -> Flag
+merge one two =
+    if BitField.fieldEqual skip one then
+        two
+
+    else
+        BitField.mergeField one two
 
 
 {-| Add a flag to a field.
@@ -101,7 +110,7 @@ add myFlag myField =
    BitField.flipIf myFlag True myField
 
 
-skip : Flag 
+skip : Flag
 skip =
     BitField.first 0`;
 
@@ -124,6 +133,7 @@ ${flag} =
   }
 
   return `module Internal.Flag exposing (..)
+
 {-| THIS FILE IS GENERATED, NO TOUCHY 
 
 This file is generated via 'npm run stylesheet' in the elm-ui repository

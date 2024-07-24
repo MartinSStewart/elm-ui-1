@@ -3,7 +3,7 @@ module Ui exposing
     , withAnimation, Msg, State
     , Element, none, text, el
     , row, column, wrap
-    , id, noAttr, attrIf
+    , id, noAttr, attrs, attrIf
     , Attribute, Length, px, fill, portion, shrink
     , width, widthMin, widthMax
     , height, heightMin, heightMax
@@ -56,7 +56,7 @@ So, the common ways to do that would be `row` and `column`.
 
 # Attributes
 
-@docs id, noAttr, attrIf
+@docs id, noAttr, attrs, attrIf
 
 
 # Size
@@ -393,9 +393,9 @@ withNoStylesheet (Two.Options opts) =
 
 {-| -}
 layout : Options msg -> List (Attribute msg) -> Element msg -> Html msg
-layout opts attrs content =
+layout opts attrList content =
     Two.renderLayout opts
-        attrs
+        attrList
         content
 
 
@@ -436,10 +436,10 @@ text =
 
 {-| -}
 node : String -> List (Attribute msg) -> Element msg -> Element msg
-node nodeName attrs child =
+node nodeName attrList child =
     Two.element (Two.NodeAs nodeName)
         Two.AsEl
-        attrs
+        attrList
         [ child ]
 
 
@@ -461,28 +461,28 @@ If you want multiple children, you'll need to use something like `row` or `colum
 
 -}
 el : List (Attribute msg) -> Element msg -> Element msg
-el attrs child =
+el attrList child =
     Two.element Two.NodeAsDiv
         Two.AsEl
-        (width fill :: attrs)
+        (width fill :: attrList)
         [ child ]
 
 
 {-| -}
 row : List (Attribute msg) -> List (Element msg) -> Element msg
-row attrs children =
+row attrList children =
     Two.element Two.NodeAsDiv
         Two.AsRow
-        (width fill :: attrs)
+        (width fill :: attrList)
         children
 
 
 {-| -}
 column : List (Attribute msg) -> List (Element msg) -> Element msg
-column attrs children =
+column attrList children =
     Two.element Two.NodeAsDiv
         Two.AsColumn
-        (width fill :: attrs)
+        (width fill :: attrList)
         children
 
 
@@ -490,6 +490,12 @@ column attrs children =
 id : String -> Attribute msg
 id strId =
     Two.attribute (Attr.id strId)
+
+
+{-| -}
+attrs : List (Attribute msg) -> Attribute msg
+attrs =
+    Two.attrs
 
 
 {-| -}
@@ -552,11 +558,11 @@ image :
         , onLoad : Maybe msg
         }
     -> Element msg
-image attrs img =
+image attrList img =
     Two.element Two.NodeAsDiv
         Two.AsEl
         (width fill
-            :: attrs
+            :: attrList
         )
         [ Two.element Two.NodeAsImage
             Two.AsEl
@@ -604,7 +610,7 @@ imageWithFallback :
         , fallback : Element msg
         }
     -> Element msg
-imageWithFallback attrs img =
+imageWithFallback attrList img =
     el
         (inFront
             (el
@@ -616,7 +622,7 @@ imageWithFallback attrs img =
                 ]
                 none
             )
-            :: attrs
+            :: attrList
         )
         img.fallback
 
@@ -846,20 +852,19 @@ width len =
             Two.Attribute
                 { flag = Flag.width
                 , attr =
-                    Two.Attr
-                        { node = Two.NodeAsDiv
-                        , additionalInheritance = BitField.none
-                        , attrs = []
-                        , class = Just Style.classes.widthFill
-                        , styles =
-                            \inheritance _ ->
-                                if BitField.has Inheritance.isRow inheritance then
-                                    [ Tuple.pair "flex-grow" (String.fromInt portionSize) ]
+                    { node = Two.NodeAsDiv
+                    , additionalInheritance = BitField.none
+                    , attrs = []
+                    , class = Just Style.classes.widthFill
+                    , styles =
+                        \inheritance _ ->
+                            if BitField.has Inheritance.isRow inheritance then
+                                [ Tuple.pair "flex-grow" (String.fromInt portionSize) ]
 
-                                else
-                                    []
-                        , nearby = Nothing
-                        }
+                            else
+                                []
+                    , nearby = []
+                    }
                 }
 
 
@@ -925,20 +930,19 @@ height len =
             Two.Attribute
                 { flag = Flag.width
                 , attr =
-                    Two.Attr
-                        { node = Two.NodeAsDiv
-                        , additionalInheritance = BitField.none
-                        , attrs = []
-                        , class = Just Style.classes.heightFill
-                        , styles =
-                            \inheritance _ ->
-                                if BitField.has Inheritance.isColumn inheritance then
-                                    [ Tuple.pair "flex-grow" (String.fromInt portionSize) ]
+                    { node = Two.NodeAsDiv
+                    , additionalInheritance = BitField.none
+                    , attrs = []
+                    , class = Just Style.classes.heightFill
+                    , styles =
+                        \inheritance _ ->
+                            if BitField.has Inheritance.isColumn inheritance then
+                                [ Tuple.pair "flex-grow" (String.fromInt portionSize) ]
 
-                                else
-                                    []
-                        , nearby = Nothing
-                        }
+                            else
+                                []
+                    , nearby = []
+                    }
                 }
 
 
@@ -1194,27 +1198,26 @@ spacing x =
     Two.Attribute
         { flag = Flag.spacing
         , attr =
-            Two.Attr
-                { node = Two.NodeAsDiv
-                , additionalInheritance =
-                    BitField.none
-                        |> BitField.set Inheritance.spacingX x
-                        |> BitField.set Inheritance.spacingY x
-                , attrs = []
-                , class = Nothing
-                , styles =
-                    \inheritance _ ->
-                        if BitField.has Inheritance.isTextLayout inheritance then
-                            []
+            { node = Two.NodeAsDiv
+            , additionalInheritance =
+                BitField.none
+                    |> BitField.set Inheritance.spacingX x
+                    |> BitField.set Inheritance.spacingY x
+            , attrs = []
+            , class = Nothing
+            , styles =
+                \inheritance _ ->
+                    if BitField.has Inheritance.isTextLayout inheritance then
+                        []
 
-                        else
-                            [ Tuple.pair "gap"
-                                (String.fromInt x
-                                    ++ "px"
-                                )
-                            ]
-                , nearby = Nothing
-                }
+                    else
+                        [ Tuple.pair "gap"
+                            (String.fromInt x
+                                ++ "px"
+                            )
+                        ]
+            , nearby = []
+            }
         }
 
 
@@ -1228,29 +1231,28 @@ spacingWith { horizontal, vertical } =
     Two.Attribute
         { flag = Flag.spacing
         , attr =
-            Two.Attr
-                { node = Two.NodeAsDiv
-                , additionalInheritance =
-                    BitField.none
-                        |> BitField.set Inheritance.spacingX horizontal
-                        |> BitField.set Inheritance.spacingY vertical
-                , attrs = []
-                , class = Nothing
-                , styles =
-                    \inheritance _ ->
-                        if BitField.has Inheritance.isTextLayout inheritance then
-                            []
+            { node = Two.NodeAsDiv
+            , additionalInheritance =
+                BitField.none
+                    |> BitField.set Inheritance.spacingX horizontal
+                    |> BitField.set Inheritance.spacingY vertical
+            , attrs = []
+            , class = Nothing
+            , styles =
+                \inheritance _ ->
+                    if BitField.has Inheritance.isTextLayout inheritance then
+                        []
 
-                        else
-                            [ Tuple.pair "gap"
-                                (String.fromInt vertical
-                                    ++ "px "
-                                    ++ String.fromInt horizontal
-                                    ++ "px"
-                                )
-                            ]
-                , nearby = Nothing
-                }
+                    else
+                        [ Tuple.pair "gap"
+                            (String.fromInt vertical
+                                ++ "px "
+                                ++ String.fromInt horizontal
+                                ++ "px"
+                            )
+                        ]
+            , nearby = []
+            }
         }
 
 

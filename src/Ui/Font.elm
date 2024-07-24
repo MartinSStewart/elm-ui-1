@@ -197,46 +197,45 @@ font details =
     Internal.Attribute
         { flag = Flag.fontAdjustment
         , attr =
-            Internal.Attr
-                { node = Internal.NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Nothing
-                , styles =
-                    \_ _ ->
-                        listIf
-                            [ ( True
-                              , ( "font-family"
-                                , details.name
-                                    |> Internal.Font.render details.fallback
-                                )
-                              )
-                            , ( True
-                              , ( "font-size"
-                                , toFontPixels actualFontSize
-                                )
-                              )
-                            , ( True
-                              , ( "font-weight"
-                                , String.fromInt details.weight
-                                )
-                              )
-                            , ( True
-                              , ( "line-height"
-                                , String.fromFloat actualLineHeight
-                                )
-                              )
-                            , ( not (List.isEmpty details.variants)
-                              , ( "font-feature-settings"
-                                , Internal.Font.renderVariants details.variants ""
-                                )
-                              )
-                            , ( Internal.Font.hasSmallCaps details.variants
-                              , ( "font-variant-caps", "small-caps" )
-                              )
-                            ]
-                , nearby = Nothing
-                }
+            { node = Internal.NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Nothing
+            , styles =
+                \_ _ ->
+                    listIf
+                        [ ( True
+                          , ( "font-family"
+                            , details.name
+                                |> Internal.Font.render details.fallback
+                            )
+                          )
+                        , ( True
+                          , ( "font-size"
+                            , toFontPixels actualFontSize
+                            )
+                          )
+                        , ( True
+                          , ( "font-weight"
+                            , String.fromInt details.weight
+                            )
+                          )
+                        , ( True
+                          , ( "line-height"
+                            , String.fromFloat actualLineHeight
+                            )
+                          )
+                        , ( not (List.isEmpty details.variants)
+                          , ( "font-feature-settings"
+                            , Internal.Font.renderVariants details.variants ""
+                            )
+                          )
+                        , ( Internal.Font.hasSmallCaps details.variants
+                          , ( "font-variant-caps", "small-caps" )
+                          )
+                        ]
+            , nearby = []
+            }
         }
 
 

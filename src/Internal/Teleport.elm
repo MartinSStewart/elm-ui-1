@@ -13,7 +13,6 @@ module Internal.Teleport exposing
 -}
 
 import Animator
-import Html.Attributes as Attr
 import Json.Decode as Decode
 import Json.Encode as Encode
 

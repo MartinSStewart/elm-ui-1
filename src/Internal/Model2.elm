@@ -191,21 +191,18 @@ emptyTransform =
 
 
 mapAttr : (a -> b) -> Attribute a -> Attribute b
-mapAttr fn (Attribute attr) =
+mapAttr fn (Attribute { flag, attr }) =
     Attribute
-        { flag = attr.flag
+        { flag = flag
         , attr =
-            case attr.attr of
-                Attr a ->
-                    Attr
-                        { node = a.node
-                        , additionalInheritance = a.additionalInheritance
-                        , attrs = List.map (Attr.map fn) a.attrs
-                        , class = a.class
-                        , styles = a.styles
-                        , nearby =
-                            Maybe.map (\( loc, elem ) -> ( loc, map fn elem )) a.nearby
-                        }
+            { node = attr.node
+            , additionalInheritance = attr.additionalInheritance
+            , attrs = List.map (Attr.map fn) attr.attrs
+            , class = attr.class
+            , styles = attr.styles
+            , nearby =
+                List.map (\( loc, elem ) -> ( loc, map fn elem )) attr.nearby
+            }
         }
 
 
@@ -224,14 +221,13 @@ noAttr =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Nothing
-                , styles = noStyles
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Nothing
+            , styles = noStyles
+            , nearby = []
+            }
         }
 
 
@@ -240,14 +236,13 @@ justFlag flag =
     Attribute
         { flag = flag
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Nothing
-                , styles = noStyles
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Nothing
+            , styles = noStyles
+            , nearby = []
+            }
         }
 
 
@@ -256,14 +251,13 @@ nearby loc el =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Nothing
-                , styles = noStyles
-                , nearby = Just ( loc, el )
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Nothing
+            , styles = noStyles
+            , nearby = [ ( loc, el ) ]
+            }
         }
 
 
@@ -278,28 +272,27 @@ teleport options =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Just (options.class ++ " " ++ options.trigger)
-                , styles =
-                    \_ _ ->
-                        options.style
-                , nearby =
-                    Just
-                        ( Trigger
-                        , Element
-                            (\_ ->
-                                Html.div
-                                    [ Attr.class (options.class ++ " " ++ Style.classes.trigger)
-                                    , Attr.property "data-elm-ui" (Encode.list identity [ options.data ])
-                                    , Attr.style "pointer-events" "none"
-                                    ]
-                                    []
-                            )
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Just (options.class ++ " " ++ options.trigger)
+            , styles =
+                \_ _ ->
+                    options.style
+            , nearby =
+                [ ( Trigger
+                  , Element
+                        (\_ ->
+                            Html.div
+                                [ Attr.class (options.class ++ " " ++ Style.classes.trigger)
+                                , Attr.property "data-elm-ui" (Encode.list identity [ options.data ])
+                                , Attr.style "pointer-events" "none"
+                                ]
+                                []
                         )
-                }
+                  )
+                ]
+            }
         }
 
 
@@ -312,32 +305,31 @@ teleportTrigger options =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Just (options.trigger ++ " " ++ options.identifierClass)
-                , styles =
-                    \_ _ ->
-                        []
-                , nearby =
-                    Just
-                        ( Trigger
-                        , Element
-                            (\_ ->
-                                Html.div
-                                    [ Attr.class Style.classes.trigger
-                                    , Attr.property "data-elm-ui"
-                                        (Teleport.encodeParentTrigger
-                                            options.trigger
-                                            options.identifierClass
-                                        )
-                                    , Attr.style "pointer-events" "none"
-                                    ]
-                                    []
-                            )
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Just (options.trigger ++ " " ++ options.identifierClass)
+            , styles =
+                \_ _ ->
+                    []
+            , nearby =
+                [ ( Trigger
+                  , Element
+                        (\_ ->
+                            Html.div
+                                [ Attr.class Style.classes.trigger
+                                , Attr.property "data-elm-ui"
+                                    (Teleport.encodeParentTrigger
+                                        options.trigger
+                                        options.identifierClass
+                                    )
+                                , Attr.style "pointer-events" "none"
+                                ]
+                                []
                         )
-                }
+                  )
+                ]
+            }
         }
 
 
@@ -353,30 +345,29 @@ teleportReaction options =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Just options.class
-                , styles =
-                    \_ _ ->
-                        options.style
-                , nearby =
-                    Just
-                        ( Trigger
-                        , Element
-                            (\_ ->
-                                Html.div
-                                    [ Attr.class (options.class ++ " " ++ Style.classes.trigger)
-                                    , Attr.property
-                                        (Teleport.reactionPropertyName options.identifierClass)
-                                        (Encode.list identity [ options.data ])
-                                    , Attr.style "pointer-events" "none"
-                                    ]
-                                    []
-                            )
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Just options.class
+            , styles =
+                \_ _ ->
+                    options.style
+            , nearby =
+                [ ( Trigger
+                  , Element
+                        (\_ ->
+                            Html.div
+                                [ Attr.class (options.class ++ " " ++ Style.classes.trigger)
+                                , Attr.property
+                                    (Teleport.reactionPropertyName options.identifierClass)
+                                    (Encode.list identity [ options.data ])
+                                , Attr.style "pointer-events" "none"
+                                ]
+                                []
                         )
-                }
+                  )
+                ]
+            }
         }
 
 
@@ -393,14 +384,13 @@ class cls =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Just cls
-                , styles = noStyles
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Just cls
+            , styles = noStyles
+            , nearby = []
+            }
         }
 
 
@@ -409,33 +399,18 @@ classWith flag cls =
     Attribute
         { flag = flag
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Just cls
-                , styles = noStyles
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Just cls
+            , styles = noStyles
+            , nearby = []
+            }
         }
 
 
 type alias TransformSlot =
     Int
-
-
-toOnlyStyle : Attribute msg -> Attribute msg
-toOnlyStyle (Attribute { flag, attr }) =
-    Attribute
-        { flag = flag
-        , attr =
-            case attr of
-                Attr details ->
-                    Attr
-                        { details
-                            | attrs = []
-                        }
-        }
 
 
 ifFlag : (Flag -> Bool) -> Attribute msg -> Bool
@@ -450,18 +425,88 @@ type Attribute msg
         }
 
 
-type Attr msg
-    = Attr
-        { node : Node
-        , additionalInheritance : Inheritance.Encoded
-        , attrs : List (Html.Attribute msg)
-        , class : Maybe String
-        , styles :
-            Inheritance.Encoded
-            -> AnalyzeBits.Encoded
-            -> List ( String, String )
-        , nearby : Maybe ( Location, Element msg )
+attrs : List (Attribute msg) -> Attribute msg
+attrs attrList =
+    case List.reverse attrList of
+        [] ->
+            noAttr
+
+        top :: remain ->
+            List.foldl
+                mergeAttrs
+                top
+                remain
+
+
+mergeAttrs : Attribute msg -> Attribute msg -> Attribute msg
+mergeAttrs (Attribute one) (Attribute two) =
+    Attribute
+        { flag = Flag.merge one.flag two.flag
+        , attr =
+            { node =
+                case one.attr.node of
+                    NodeAsDiv ->
+                        two.attr.node
+
+                    _ ->
+                        one.attr.node
+            , additionalInheritance =
+                BitField.merge
+                    one.attr.additionalInheritance
+                    two.attr.additionalInheritance
+            , attrs =
+                case one.attr.attrs of
+                    [] ->
+                        two.attr.attrs
+
+                    _ ->
+                        one.attr.attrs ++ two.attr.attrs
+            , class = mergeClasses one.attr.class two.attr.class
+            , styles =
+                \inheritance analyzed ->
+                    case one.attr.styles inheritance analyzed of
+                        [] ->
+                            two.attr.styles inheritance analyzed
+
+                        oneStyles ->
+                            oneStyles ++ two.attr.styles inheritance analyzed
+            , nearby =
+                case one.attr.nearby of
+                    [] ->
+                        two.attr.nearby
+
+                    _ ->
+                        one.attr.nearby ++ two.attr.nearby
+            }
         }
+
+
+mergeClasses : Maybe String -> Maybe String -> Maybe String
+mergeClasses one two =
+    case one of
+        Nothing ->
+            two
+
+        Just oneStr ->
+            case two of
+                Nothing ->
+                    one
+
+                Just twoStr ->
+                    Just (oneStr ++ " " ++ twoStr)
+
+
+type alias Attr msg =
+    { node : Node
+    , additionalInheritance : Inheritance.Encoded
+    , attrs : List (Html.Attribute msg)
+    , class : Maybe String
+    , styles :
+        Inheritance.Encoded
+        -> AnalyzeBits.Encoded
+        -> List ( String, String )
+    , nearby : List ( Location, Element msg )
+    }
 
 
 type Node
@@ -611,14 +656,13 @@ attribute a =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = [ a ]
-                , class = Nothing
-                , styles = noStyles
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = [ a ]
+            , class = Nothing
+            , styles = noStyles
+            , nearby = []
+            }
         }
 
 
@@ -627,14 +671,13 @@ attributeWith flag a =
     Attribute
         { flag = flag
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = [ a ]
-                , class = Nothing
-                , styles = noStyles
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = [ a ]
+            , class = Nothing
+            , styles = noStyles
+            , nearby = []
+            }
         }
 
 
@@ -645,16 +688,15 @@ onPress msg =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsButton
-                , additionalInheritance = BitField.none
-                , attrs =
-                    [ Events.onClick msg
-                    ]
-                , class = Just Style.classes.cursorPointer
-                , styles = noStyles
-                , nearby = Nothing
-                }
+            { node = NodeAsButton
+            , additionalInheritance = BitField.none
+            , attrs =
+                [ Events.onClick msg
+                ]
+            , class = Just Style.classes.cursorPointer
+            , styles = noStyles
+            , nearby = []
+            }
         }
 
 
@@ -679,25 +721,24 @@ onKey details =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs =
-                    [ Events.preventDefaultOn "keyup"
-                        (Json.map
-                            (\fired ->
-                                ( fired
-                                , True
-                                )
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs =
+                [ Events.preventDefaultOn "keyup"
+                    (Json.map
+                        (\fired ->
+                            ( fired
+                            , True
                             )
-                            isKey
                         )
-                    , Attr.tabindex 0
-                    ]
-                , class = Nothing
-                , styles = noStyles
-                , nearby = Nothing
-                }
+                        isKey
+                    )
+                , Attr.tabindex 0
+                ]
+            , class = Nothing
+            , styles = noStyles
+            , nearby = []
+            }
         }
 
 
@@ -711,32 +752,31 @@ link details =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsLink
-                , additionalInheritance = BitField.none
-                , attrs =
-                    [ Attr.href details.url
-                    , case details.download of
-                        Nothing ->
-                            Attr.rel "noopener noreferrer"
+            { node = NodeAsLink
+            , additionalInheritance = BitField.none
+            , attrs =
+                [ Attr.href details.url
+                , case details.download of
+                    Nothing ->
+                        Attr.rel "noopener noreferrer"
 
-                        Just _ ->
+                    Just _ ->
+                        Attr.class ""
+                , case details.download of
+                    Nothing ->
+                        if details.newTab then
+                            Attr.target "_blank"
+
+                        else
                             Attr.class ""
-                    , case details.download of
-                        Nothing ->
-                            if details.newTab then
-                                Attr.target "_blank"
 
-                            else
-                                Attr.class ""
-
-                        Just downloadName ->
-                            Attr.download downloadName
-                    ]
-                , class = Nothing
-                , styles = noStyles
-                , nearby = Nothing
-                }
+                    Just downloadName ->
+                        Attr.download downloadName
+                ]
+            , class = Nothing
+            , styles = noStyles
+            , nearby = []
+            }
         }
 
 
@@ -745,14 +785,13 @@ nodeAs node =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = node
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Nothing
-                , styles = noStyles
-                , nearby = Nothing
-                }
+            { node = node
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Nothing
+            , styles = noStyles
+            , nearby = []
+            }
         }
 
 
@@ -761,16 +800,15 @@ styleList props =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Nothing
-                , styles =
-                    \_ _ ->
-                        props
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Nothing
+            , styles =
+                \_ _ ->
+                    props
+            , nearby = []
+            }
         }
 
 
@@ -779,16 +817,15 @@ style name val =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Nothing
-                , styles =
-                    \_ _ ->
-                        [ ( name, val ) ]
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Nothing
+            , styles =
+                \_ _ ->
+                    [ ( name, val ) ]
+            , nearby = []
+            }
         }
 
 
@@ -797,16 +834,15 @@ styleDynamic name toVal =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Nothing
-                , styles =
-                    \inheritance _ ->
-                        [ ( name, toVal inheritance ) ]
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Nothing
+            , styles =
+                \inheritance _ ->
+                    [ ( name, toVal inheritance ) ]
+            , nearby = []
+            }
         }
 
 
@@ -820,18 +856,17 @@ style2 oneName oneVal twoName twoVal =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Nothing
-                , styles =
-                    \_ _ ->
-                        [ ( oneName, oneVal )
-                        , ( twoName, twoVal )
-                        ]
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Nothing
+            , styles =
+                \_ _ ->
+                    [ ( oneName, oneVal )
+                    , ( twoName, twoVal )
+                    ]
+            , nearby = []
+            }
         }
 
 
@@ -847,19 +882,18 @@ style3 oneName oneVal twoName twoVal threeName threeVal =
     Attribute
         { flag = Flag.skip
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Nothing
-                , styles =
-                    \_ _ ->
-                        [ ( oneName, oneVal )
-                        , ( twoName, twoVal )
-                        , ( threeName, threeVal )
-                        ]
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Nothing
+            , styles =
+                \_ _ ->
+                    [ ( oneName, oneVal )
+                    , ( twoName, twoVal )
+                    , ( threeName, threeVal )
+                    ]
+            , nearby = []
+            }
         }
 
 
@@ -868,16 +902,15 @@ styleWith flag name val =
     Attribute
         { flag = flag
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Nothing
-                , styles =
-                    \_ _ ->
-                        [ ( name, val ) ]
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Nothing
+            , styles =
+                \_ _ ->
+                    [ ( name, val ) ]
+            , nearby = []
+            }
         }
 
 
@@ -893,16 +926,15 @@ styleAndClass flag v =
     Attribute
         { flag = flag
         , attr =
-            Attr
-                { node = NodeAsDiv
-                , additionalInheritance = BitField.none
-                , attrs = []
-                , class = Just v.class
-                , styles =
-                    \_ _ ->
-                        [ ( v.styleName, v.styleVal ) ]
-                , nearby = Nothing
-                }
+            { node = NodeAsDiv
+            , additionalInheritance = BitField.none
+            , attrs = []
+            , class = Just v.class
+            , styles =
+                \_ _ ->
+                    [ ( v.styleName, v.styleVal ) ]
+            , nearby = []
+            }
         }
 
 
@@ -926,19 +958,19 @@ renderLayout :
     -> List (Attribute msg)
     -> Element msg
     -> Html.Html msg
-renderLayout (Options options) attrs content =
+renderLayout (Options options) attrList content =
     let
         (Element toFinalLayout) =
             element NodeAsDiv
                 AsRoot
                 (case options.animation of
                     Nothing ->
-                        attrs
+                        attrList
 
                     Just anim ->
                         onAnimationStart anim.toMsg
                             :: onAnimationUnmount anim.toMsg
-                            :: attrs
+                            :: attrList
                 )
                 [ Element
                     (\_ ->
@@ -1070,7 +1102,7 @@ element :
     -> List (Attribute msg)
     -> List (Element msg)
     -> Element msg
-element node layout attrs children =
+element node layout attrList children =
     Element
         (\parentBits ->
             let
@@ -1094,7 +1126,7 @@ element node layout attrs children =
                            )
 
                 ( analyzedBits, myBits, iHave ) =
-                    analyze Flag.none BitField.init myBaseBits attrs
+                    analyze Flag.none BitField.init myBaseBits attrList
 
                 htmlAttrs =
                     if BitField.has Inheritance.isTextLayout parentBits && BitField.has Flag.xAlign iHave then
@@ -1114,20 +1146,33 @@ element node layout attrs children =
                                         ++ "px"
                                     )
                         in
-                        toAttrs parentBits myBits Flag.none [ margin ] attrs
+                        toAttrs parentBits myBits Flag.none [ margin ] attrList
 
                     else
-                        toAttrs parentBits myBits Flag.none [] attrs
+                        toAttrs parentBits myBits Flag.none [] attrList
 
                 styleAttrs =
                     if BitField.has AnalyzeBits.cssVars analyzedBits then
-                        toStyleAsEncodedProperty parentBits myBits analyzedBits Flag.none (contextClasses layout) htmlAttrs "" (List.reverse attrs)
+                        toStyleAsEncodedProperty parentBits
+                            myBits
+                            analyzedBits
+                            Flag.none
+                            (contextClasses layout)
+                            htmlAttrs
+                            ""
+                            (List.reverse attrList)
 
                     else
-                        toStyle parentBits myBits analyzedBits Flag.none htmlAttrs (contextClasses layout) (List.reverse attrs)
+                        toStyle parentBits
+                            myBits
+                            analyzedBits
+                            Flag.none
+                            htmlAttrs
+                            (contextClasses layout)
+                            (List.reverse attrList)
 
                 finalChildren =
-                    toChildren myBits analyzedBits attrs children
+                    toChildren myBits analyzedBits attrList children
             in
             if node == NodeAsImage then
                 Html.img styleAttrs finalChildren
@@ -1244,14 +1289,14 @@ toChildren :
     -> List (Attribute msg)
     -> List (Element msg)
     -> List (Html.Html msg)
-toChildren myBits analyzedBits attrs children =
+toChildren myBits analyzedBits attrList children =
     if BitField.has AnalyzeBits.nearbys analyzedBits then
         let
             behind =
-                toBehindElements myBits [] attrs
+                toBehindElements myBits [] attrList
 
             after =
-                toNearbyElements myBits [] attrs
+                toNearbyElements myBits [] attrList
         in
         behind ++ List.map (\(Element toChild) -> toChild myBits) children ++ after
 
@@ -1265,7 +1310,7 @@ elementKeyed :
     -> List (Attribute msg)
     -> List ( String, Element msg )
     -> Element msg
-elementKeyed node layout attrs children =
+elementKeyed node layout attrList children =
     Element
         (\parentBits ->
             let
@@ -1289,7 +1334,7 @@ elementKeyed node layout attrs children =
                            )
 
                 ( analyzedBits, myBits, iHave ) =
-                    analyze Flag.none BitField.init myBaseBits attrs
+                    analyze Flag.none BitField.init myBaseBits attrList
 
                 htmlAttrs =
                     if BitField.has Inheritance.isTextLayout parentBits && BitField.has Flag.xAlign iHave then
@@ -1309,20 +1354,20 @@ elementKeyed node layout attrs children =
                                         ++ "px"
                                     )
                         in
-                        toAttrs parentBits myBits Flag.none [ margin ] attrs
+                        toAttrs parentBits myBits Flag.none [ margin ] attrList
 
                     else
-                        toAttrs parentBits myBits Flag.none [] attrs
+                        toAttrs parentBits myBits Flag.none [] attrList
 
                 styleAttrs =
                     if BitField.has AnalyzeBits.cssVars analyzedBits then
-                        toStyleAsEncodedProperty parentBits myBits analyzedBits Flag.none (contextClasses layout) htmlAttrs "" (List.reverse attrs)
+                        toStyleAsEncodedProperty parentBits myBits analyzedBits Flag.none (contextClasses layout) htmlAttrs "" (List.reverse attrList)
 
                     else
-                        toStyle parentBits myBits analyzedBits Flag.none htmlAttrs (contextClasses layout) (List.reverse attrs)
+                        toStyle parentBits myBits analyzedBits Flag.none htmlAttrs (contextClasses layout) (List.reverse attrList)
 
                 finalChildren =
-                    toChildrenKeyed myBits analyzedBits attrs children
+                    toChildrenKeyed myBits analyzedBits attrList children
             in
             if BitField.has AnalyzeBits.isLink analyzedBits then
                 Html.Keyed.node "a" styleAttrs finalChildren
@@ -1436,15 +1481,15 @@ toChildrenKeyed :
     -> List (Attribute msg)
     -> List ( String, Element msg )
     -> List ( String, Html.Html msg )
-toChildrenKeyed myBits analyzedBits attrs children =
+toChildrenKeyed myBits analyzedBits attrList children =
     if BitField.has AnalyzeBits.nearbys analyzedBits then
         let
             behind =
-                toBehindElements myBits [] attrs
+                toBehindElements myBits [] attrList
                     |> List.map (Tuple.pair "behind")
 
             after =
-                toNearbyElements myBits [] attrs
+                toNearbyElements myBits [] attrList
                     |> List.map (Tuple.pair "after")
         in
         behind
@@ -1482,8 +1527,8 @@ analyze :
     -> Inheritance.Encoded
     -> List (Attribute msg)
     -> ( AnalyzeBits.Encoded, Inheritance.Encoded, Flag.Field )
-analyze has encoded inheritance attrs =
-    case attrs of
+analyze has encoded inheritance attrList =
+    case attrList of
         [] ->
             ( encoded
                 |> BitField.flipIf AnalyzeBits.cssVars
@@ -1513,22 +1558,20 @@ analyze has encoded inheritance attrs =
                 analyze has encoded inheritance remain
 
             else
-                case attr of
-                    Attr details ->
-                        let
-                            newEncoded =
-                                encoded
-                                    |> BitField.flipIf AnalyzeBits.nearbys (details.nearby /= Nothing)
-                                    |> BitField.flipIf AnalyzeBits.isLink
-                                        (NodeAsLink == details.node)
-                                    |> BitField.flipIf AnalyzeBits.isButton
-                                        (NodeAsButton == details.node)
+                let
+                    newEncoded =
+                        encoded
+                            |> BitField.flipIf AnalyzeBits.nearbys (attr.nearby /= [])
+                            |> BitField.flipIf AnalyzeBits.isLink
+                                (NodeAsLink == attr.node)
+                            |> BitField.flipIf AnalyzeBits.isButton
+                                (NodeAsButton == attr.node)
 
-                            newInheritance =
-                                inheritance
-                                    |> BitField.merge details.additionalInheritance
-                        in
-                        analyze (Flag.add flag has) newEncoded newInheritance remain
+                    newInheritance =
+                        inheritance
+                            |> BitField.merge attr.additionalInheritance
+                in
+                analyze (Flag.add flag has) newEncoded newInheritance remain
 
 
 toAttrs :
@@ -1538,8 +1581,8 @@ toAttrs :
     -> List (VirtualDom.Attribute msg)
     -> List (Attribute msg)
     -> List (Html.Attribute msg)
-toAttrs parentBits myBits has htmlAttrs attrs =
-    case attrs of
+toAttrs parentBits myBits has htmlAttrs attrList =
+    case attrList of
         [] ->
             htmlAttrs
 
@@ -1556,29 +1599,27 @@ toAttrs parentBits myBits has htmlAttrs attrs =
                 toAttrs parentBits myBits has htmlAttrs remain
 
             else
-                case attr of
-                    Attr details ->
-                        case details.attrs of
-                            [] ->
-                                toAttrs parentBits myBits has htmlAttrs remain
+                case attr.attrs of
+                    [] ->
+                        toAttrs parentBits myBits has htmlAttrs remain
 
-                            _ ->
-                                let
-                                    newAttrs =
-                                        case details.attrs of
-                                            [] ->
-                                                htmlAttrs
+                    _ ->
+                        let
+                            newAttrs =
+                                case attr.attrs of
+                                    [] ->
+                                        htmlAttrs
 
-                                            [ single ] ->
-                                                single :: htmlAttrs
+                                    [ single ] ->
+                                        single :: htmlAttrs
 
-                                            [ first, second ] ->
-                                                first :: second :: htmlAttrs
+                                    [ first, second ] ->
+                                        first :: second :: htmlAttrs
 
-                                            list ->
-                                                list ++ htmlAttrs
-                                in
-                                toAttrs parentBits myBits (Flag.add flag has) newAttrs remain
+                                    list ->
+                                        list ++ htmlAttrs
+                        in
+                        toAttrs parentBits myBits (Flag.add flag has) newAttrs remain
 
 
 toBehindElements :
@@ -1586,23 +1627,39 @@ toBehindElements :
     -> List (Html.Html msg)
     -> List (Attribute msg)
     -> List (Html.Html msg)
-toBehindElements inheritance foundElems attrs =
-    case attrs of
+toBehindElements inheritance foundElems attrList =
+    case attrList of
         [] ->
             foundElems
 
         (Attribute { attr }) :: remain ->
-            case attr of
-                Attr details ->
-                    case details.nearby of
-                        Just ( Behind, behindElem ) ->
-                            toBehindElements inheritance (nearbyToHtml inheritance Behind behindElem :: foundElems) remain
+            case attr.nearby of
+                [] ->
+                    toBehindElements inheritance foundElems remain
 
-                        Just ( Trigger, triggerElem ) ->
-                            toBehindElements inheritance (nearbyToHtml inheritance Trigger triggerElem :: foundElems) remain
+                [ ( Behind, behindElem ) ] ->
+                    toBehindElements inheritance (nearbyToHtml inheritance Behind behindElem :: foundElems) remain
 
-                        _ ->
-                            toBehindElements inheritance foundElems remain
+                [ ( Trigger, triggerElem ) ] ->
+                    toBehindElements inheritance (nearbyToHtml inheritance Trigger triggerElem :: foundElems) remain
+
+                [ ( _, _ ) ] ->
+                    toBehindElements inheritance foundElems remain
+
+                nearbys ->
+                    let
+                        renderedNearbys =
+                            List.filterMap
+                                (\( location, nearbyElem ) ->
+                                    if location == Behind || location == Trigger then
+                                        Just (nearbyToHtml inheritance location nearbyElem)
+
+                                    else
+                                        Nothing
+                                )
+                                nearbys
+                    in
+                    toBehindElements inheritance (renderedNearbys ++ foundElems) remain
 
 
 toNearbyElements :
@@ -1610,26 +1667,39 @@ toNearbyElements :
     -> List (Html.Html msg)
     -> List (Attribute msg)
     -> List (Html.Html msg)
-toNearbyElements inheritance foundElems attrs =
-    case attrs of
+toNearbyElements inheritance foundElems attrList =
+    case attrList of
         [] ->
             foundElems
 
         (Attribute { attr }) :: remain ->
-            case attr of
-                Attr details ->
-                    case details.nearby of
-                        Nothing ->
-                            toNearbyElements inheritance foundElems remain
+            case attr.nearby of
+                [] ->
+                    toNearbyElements inheritance foundElems remain
 
-                        Just ( Behind, _ ) ->
-                            toNearbyElements inheritance foundElems remain
+                [ ( Behind, _ ) ] ->
+                    toNearbyElements inheritance foundElems remain
 
-                        Just ( Trigger, _ ) ->
-                            toNearbyElements inheritance foundElems remain
+                [ ( Trigger, _ ) ] ->
+                    toNearbyElements inheritance foundElems remain
 
-                        Just ( location, nearbyElem ) ->
-                            toNearbyElements inheritance (nearbyToHtml inheritance location nearbyElem :: foundElems) remain
+                [ ( location, nearbyElem ) ] ->
+                    toNearbyElements inheritance (nearbyToHtml inheritance location nearbyElem :: foundElems) remain
+
+                nearbys ->
+                    let
+                        renderedNearbys =
+                            List.filterMap
+                                (\( location, nearbyElem ) ->
+                                    if location == Behind || location == Trigger then
+                                        Nothing
+
+                                    else
+                                        Just (nearbyToHtml inheritance location nearbyElem)
+                                )
+                                nearbys
+                    in
+                    toNearbyElements inheritance (renderedNearbys ++ foundElems) remain
 
 
 toStyle :
@@ -1641,8 +1711,8 @@ toStyle :
     -> String
     -> List (Attribute msg)
     -> List (Html.Attribute msg)
-toStyle parentBits myBits analyzedBits has htmlAttrs classes attrs =
-    case attrs of
+toStyle parentBits myBits analyzedBits has htmlAttrs classes attrList =
+    case attrList of
         [] ->
             if BitField.has AnalyzeBits.nearbys analyzedBits then
                 Attr.class (classes ++ " " ++ Style.classes.hasNearby) :: htmlAttrs
@@ -1663,40 +1733,38 @@ toStyle parentBits myBits analyzedBits has htmlAttrs classes attrs =
                 toStyle parentBits myBits analyzedBits has htmlAttrs classes remain
 
             else
-                case attr of
-                    Attr details ->
-                        let
-                            newClasses =
-                                case details.class of
-                                    Nothing ->
-                                        classes
+                let
+                    newClasses =
+                        case attr.class of
+                            Nothing ->
+                                classes
 
-                                    Just classStr ->
-                                        classes ++ " " ++ classStr
-                        in
-                        case details.styles parentBits analyzedBits of
-                            [] ->
-                                toStyle parentBits myBits analyzedBits (Flag.add flag has) htmlAttrs newClasses remain
+                            Just classStr ->
+                                classes ++ " " ++ classStr
+                in
+                case attr.styles parentBits analyzedBits of
+                    [] ->
+                        toStyle parentBits myBits analyzedBits (Flag.add flag has) htmlAttrs newClasses remain
 
-                            [ ( name, val ) ] ->
-                                toStyle parentBits myBits analyzedBits (Flag.add flag has) (Attr.style name val :: htmlAttrs) newClasses remain
+                    [ ( name, val ) ] ->
+                        toStyle parentBits myBits analyzedBits (Flag.add flag has) (Attr.style name val :: htmlAttrs) newClasses remain
 
-                            [ ( name, val ), ( twoName, twoVal ) ] ->
-                                toStyle parentBits myBits analyzedBits (Flag.add flag has) (Attr.style name val :: Attr.style twoName twoVal :: htmlAttrs) newClasses remain
+                    [ ( name, val ), ( twoName, twoVal ) ] ->
+                        toStyle parentBits myBits analyzedBits (Flag.add flag has) (Attr.style name val :: Attr.style twoName twoVal :: htmlAttrs) newClasses remain
 
-                            list ->
-                                toStyle parentBits myBits analyzedBits (Flag.add flag has) (addStyles list htmlAttrs) newClasses remain
+                    list ->
+                        toStyle parentBits myBits analyzedBits (Flag.add flag has) (addStyles list htmlAttrs) newClasses remain
 
 
 addStyles : List ( String, String ) -> List (Html.Attribute msg) -> List (Html.Attribute msg)
-addStyles styles attrs =
+addStyles styles attrList =
     case styles of
         [] ->
-            attrs
+            attrList
 
         ( name, val ) :: remain ->
             addStyles remain
-                (Attr.style name val :: attrs)
+                (Attr.style name val :: attrList)
 
 
 toStyleAsEncodedProperty :
@@ -1709,8 +1777,8 @@ toStyleAsEncodedProperty :
     -> String
     -> List (Attribute msg)
     -> List (Html.Attribute msg)
-toStyleAsEncodedProperty parentBits myBits analyzed has classesString htmlAttrs str attrs =
-    case attrs of
+toStyleAsEncodedProperty parentBits myBits analyzed has classesString htmlAttrs str attrList =
+    case attrList of
         [] ->
             (if BitField.has AnalyzeBits.nearbys analyzed then
                 Attr.class (classesString ++ " " ++ Style.classes.hasNearby)
@@ -1735,40 +1803,38 @@ toStyleAsEncodedProperty parentBits myBits analyzed has classesString htmlAttrs 
                 toStyleAsEncodedProperty parentBits myBits analyzed has classesString htmlAttrs str remain
 
             else
-                case attr of
-                    Attr details ->
-                        let
-                            newClasses =
-                                case details.class of
-                                    Nothing ->
-                                        classesString
+                let
+                    newClasses =
+                        case attr.class of
+                            Nothing ->
+                                classesString
 
-                                    Just moreClasses ->
-                                        classesString ++ " " ++ moreClasses
-                        in
-                        case details.styles parentBits analyzed of
-                            [] ->
-                                toStyleAsEncodedProperty parentBits myBits analyzed (Flag.add flag has) newClasses htmlAttrs str remain
+                            Just moreClasses ->
+                                classesString ++ " " ++ moreClasses
+                in
+                case attr.styles parentBits analyzed of
+                    [] ->
+                        toStyleAsEncodedProperty parentBits myBits analyzed (Flag.add flag has) newClasses htmlAttrs str remain
 
-                            [ ( name, val ) ] ->
-                                toStyleAsEncodedProperty parentBits myBits analyzed (Flag.add flag has) newClasses htmlAttrs (name ++ ":" ++ val ++ ";" ++ str) remain
+                    [ ( name, val ) ] ->
+                        toStyleAsEncodedProperty parentBits myBits analyzed (Flag.add flag has) newClasses htmlAttrs (name ++ ":" ++ val ++ ";" ++ str) remain
 
-                            [ ( name, val ), ( twoName, twoVal ) ] ->
-                                toStyleAsEncodedProperty parentBits myBits analyzed (Flag.add flag has) newClasses htmlAttrs (name ++ ":" ++ val ++ ";" ++ twoName ++ ":" ++ twoVal ++ ";" ++ str) remain
+                    [ ( name, val ), ( twoName, twoVal ) ] ->
+                        toStyleAsEncodedProperty parentBits myBits analyzed (Flag.add flag has) newClasses htmlAttrs (name ++ ":" ++ val ++ ";" ++ twoName ++ ":" ++ twoVal ++ ";" ++ str) remain
 
-                            list ->
-                                toStyleAsEncodedProperty parentBits myBits analyzed (Flag.add flag has) newClasses htmlAttrs (addStylesToString list str) remain
+                    list ->
+                        toStyleAsEncodedProperty parentBits myBits analyzed (Flag.add flag has) newClasses htmlAttrs (addStylesToString list str) remain
 
 
 addStylesToString : List ( String, String ) -> String -> String
-addStylesToString styles attrs =
+addStylesToString styles attrList =
     case styles of
         [] ->
-            attrs
+            attrList
 
         ( name, val ) :: remain ->
             addStylesToString remain
-                (name ++ ":" ++ val ++ ";" ++ attrs)
+                (name ++ ":" ++ val ++ ";" ++ attrList)
 
 
 {-| -}
