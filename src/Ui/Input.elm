@@ -750,14 +750,33 @@ textHelper textInput attrs textOptions =
 
     -}
     let
+        hasId attr =
+            Two.keepOnly
+                (\flag ->
+                    BitField.fieldEqual Flag.id flag
+                )
+                attr
+
         withDefaults =
-            defaultTextBoxStyle2 ++ attrs
+            defaultTextBoxStyle2
+                ++ List.map (Two.removeIfFlag (BitField.fieldEqual Flag.id)) attrs
     in
     case textInput.type_ of
         TextArea ->
             let
+                id =
+                    List.filterMap
+                        hasId
+                        attrs
+
                 padding =
-                    List.filter (Two.ifFlag (BitField.fieldEqual Flag.padding)) withDefaults
+                    List.filterMap
+                        (Two.keepOnly
+                            (\flag ->
+                                BitField.fieldEqual Flag.padding flag
+                            )
+                        )
+                        withDefaults
 
                 inputElement =
                     Two.element
@@ -786,6 +805,7 @@ textHelper textInput attrs textOptions =
                             Just placeholder ->
                                 Two.attribute (Html.Attributes.placeholder placeholder)
                          ]
+                            ++ id
                             ++ padding
                         )
                         []

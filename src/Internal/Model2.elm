@@ -191,19 +191,24 @@ emptyTransform =
 
 
 mapAttr : (a -> b) -> Attribute a -> Attribute b
-mapAttr fn (Attribute { flag, attr }) =
+mapAttr fn (Attribute attrList) =
     Attribute
-        { flag = flag
-        , attr =
-            { node = attr.node
-            , additionalInheritance = attr.additionalInheritance
-            , attrs = List.map (Attr.map fn) attr.attrs
-            , class = attr.class
-            , styles = attr.styles
-            , nearby =
-                List.map (\( loc, elem ) -> ( loc, map fn elem )) attr.nearby
-            }
-        }
+        (List.map
+            (\{ flag, attr } ->
+                { flag = flag
+                , attr =
+                    { node = attr.node
+                    , additionalInheritance = attr.additionalInheritance
+                    , attrs = List.map (Attr.map fn) attr.attrs
+                    , class = attr.class
+                    , styles = attr.styles
+                    , nearby =
+                        List.map (\( loc, elem ) -> ( loc, map fn elem )) attr.nearby
+                    }
+                }
+            )
+            attrList
+        )
 
 
 type Layout
@@ -219,46 +224,49 @@ type Layout
 noAttr : Attribute msg
 noAttr =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Nothing
-            , styles = noStyles
-            , nearby = []
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Nothing
+                , styles = noStyles
+                , nearby = []
+                }
+          }
+        ]
 
 
 justFlag : Flag -> Attribute msg
 justFlag flag =
     Attribute
-        { flag = flag
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Nothing
-            , styles = noStyles
-            , nearby = []
-            }
-        }
+        [ { flag = flag
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Nothing
+                , styles = noStyles
+                , nearby = []
+                }
+          }
+        ]
 
 
 nearby : Location -> Element msg -> Attribute msg
 nearby loc el =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Nothing
-            , styles = noStyles
-            , nearby = [ ( loc, el ) ]
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Nothing
+                , styles = noStyles
+                , nearby = [ ( loc, el ) ]
+                }
+          }
+        ]
 
 
 teleport :
@@ -270,30 +278,31 @@ teleport :
     -> Attribute msg
 teleport options =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Just (options.class ++ " " ++ options.trigger)
-            , styles =
-                \_ _ ->
-                    options.style
-            , nearby =
-                [ ( Trigger
-                  , Element
-                        (\_ ->
-                            Html.div
-                                [ Attr.class (options.class ++ " " ++ Style.classes.trigger)
-                                , Attr.property "data-elm-ui" (Encode.list identity [ options.data ])
-                                , Attr.style "pointer-events" "none"
-                                ]
-                                []
-                        )
-                  )
-                ]
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Just (options.class ++ " " ++ options.trigger)
+                , styles =
+                    \_ _ ->
+                        options.style
+                , nearby =
+                    [ ( Trigger
+                      , Element
+                            (\_ ->
+                                Html.div
+                                    [ Attr.class (options.class ++ " " ++ Style.classes.trigger)
+                                    , Attr.property "data-elm-ui" (Encode.list identity [ options.data ])
+                                    , Attr.style "pointer-events" "none"
+                                    ]
+                                    []
+                            )
+                      )
+                    ]
+                }
+          }
+        ]
 
 
 teleportTrigger :
@@ -303,34 +312,35 @@ teleportTrigger :
     -> Attribute msg
 teleportTrigger options =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Just (options.trigger ++ " " ++ options.identifierClass)
-            , styles =
-                \_ _ ->
-                    []
-            , nearby =
-                [ ( Trigger
-                  , Element
-                        (\_ ->
-                            Html.div
-                                [ Attr.class Style.classes.trigger
-                                , Attr.property "data-elm-ui"
-                                    (Teleport.encodeParentTrigger
-                                        options.trigger
-                                        options.identifierClass
-                                    )
-                                , Attr.style "pointer-events" "none"
-                                ]
-                                []
-                        )
-                  )
-                ]
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Just (options.trigger ++ " " ++ options.identifierClass)
+                , styles =
+                    \_ _ ->
+                        []
+                , nearby =
+                    [ ( Trigger
+                      , Element
+                            (\_ ->
+                                Html.div
+                                    [ Attr.class Style.classes.trigger
+                                    , Attr.property "data-elm-ui"
+                                        (Teleport.encodeParentTrigger
+                                            options.trigger
+                                            options.identifierClass
+                                        )
+                                    , Attr.style "pointer-events" "none"
+                                    ]
+                                    []
+                            )
+                      )
+                    ]
+                }
+          }
+        ]
 
 
 teleportReaction :
@@ -343,32 +353,33 @@ teleportReaction :
     -> Attribute msg
 teleportReaction options =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Just options.class
-            , styles =
-                \_ _ ->
-                    options.style
-            , nearby =
-                [ ( Trigger
-                  , Element
-                        (\_ ->
-                            Html.div
-                                [ Attr.class (options.class ++ " " ++ Style.classes.trigger)
-                                , Attr.property
-                                    (Teleport.reactionPropertyName options.identifierClass)
-                                    (Encode.list identity [ options.data ])
-                                , Attr.style "pointer-events" "none"
-                                ]
-                                []
-                        )
-                  )
-                ]
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Just options.class
+                , styles =
+                    \_ _ ->
+                        options.style
+                , nearby =
+                    [ ( Trigger
+                      , Element
+                            (\_ ->
+                                Html.div
+                                    [ Attr.class (options.class ++ " " ++ Style.classes.trigger)
+                                    , Attr.property
+                                        (Teleport.reactionPropertyName options.identifierClass)
+                                        (Encode.list identity [ options.data ])
+                                    , Attr.style "pointer-events" "none"
+                                    ]
+                                    []
+                            )
+                      )
+                    ]
+                }
+          }
+        ]
 
 
 noStyles :
@@ -382,118 +393,81 @@ noStyles inheritance encoded =
 class : String -> Attribute msg
 class cls =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Just cls
-            , styles = noStyles
-            , nearby = []
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Just cls
+                , styles = noStyles
+                , nearby = []
+                }
+          }
+        ]
 
 
 classWith : Flag -> String -> Attribute msg
 classWith flag cls =
     Attribute
-        { flag = flag
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Just cls
-            , styles = noStyles
-            , nearby = []
-            }
-        }
+        [ { flag = flag
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Just cls
+                , styles = noStyles
+                , nearby = []
+                }
+          }
+        ]
 
 
 type alias TransformSlot =
     Int
 
 
-ifFlag : (Flag -> Bool) -> Attribute msg -> Bool
-ifFlag isPassing (Attribute { flag }) =
-    isPassing flag
+keepOnly : (Flag -> Bool) -> Attribute msg -> Maybe (Attribute msg)
+keepOnly isPassing (Attribute attrList) =
+    let
+        newAttrs =
+            List.filter
+                (\attr ->
+                    isPassing attr.flag
+                )
+                attrList
+    in
+    case newAttrs of
+        [] ->
+            Nothing
+
+        _ ->
+            Just (Attribute newAttrs)
+
+
+removeIfFlag : (Flag -> Bool) -> Attribute msg -> Attribute msg
+removeIfFlag shouldRemove (Attribute attrList) =
+    Attribute (List.filter (\attr -> not (shouldRemove attr.flag)) attrList)
 
 
 type Attribute msg
-    = Attribute
-        { flag : Flag
-        , attr : Attr msg
-        }
+    = Attribute (List (FlaggedAttr msg))
+
+
+type alias FlaggedAttr msg =
+    { flag : Flag
+    , attr : Attr msg
+    }
 
 
 attrs : List (Attribute msg) -> Attribute msg
 attrs attrList =
-    case List.reverse attrList of
-        [] ->
-            noAttr
-
-        top :: remain ->
-            List.foldl
-                mergeAttrs
-                top
-                remain
-
-
-mergeAttrs : Attribute msg -> Attribute msg -> Attribute msg
-mergeAttrs (Attribute one) (Attribute two) =
     Attribute
-        { flag = Flag.merge one.flag two.flag
-        , attr =
-            { node =
-                case one.attr.node of
-                    NodeAsDiv ->
-                        two.attr.node
-
-                    _ ->
-                        one.attr.node
-            , additionalInheritance =
-                BitField.merge
-                    one.attr.additionalInheritance
-                    two.attr.additionalInheritance
-            , attrs =
-                case one.attr.attrs of
-                    [] ->
-                        two.attr.attrs
-
-                    _ ->
-                        one.attr.attrs ++ two.attr.attrs
-            , class = mergeClasses one.attr.class two.attr.class
-            , styles =
-                \inheritance analyzed ->
-                    case one.attr.styles inheritance analyzed of
-                        [] ->
-                            two.attr.styles inheritance analyzed
-
-                        oneStyles ->
-                            oneStyles ++ two.attr.styles inheritance analyzed
-            , nearby =
-                case one.attr.nearby of
-                    [] ->
-                        two.attr.nearby
-
-                    _ ->
-                        one.attr.nearby ++ two.attr.nearby
-            }
-        }
-
-
-mergeClasses : Maybe String -> Maybe String -> Maybe String
-mergeClasses one two =
-    case one of
-        Nothing ->
-            two
-
-        Just oneStr ->
-            case two of
-                Nothing ->
-                    one
-
-                Just twoStr ->
-                    Just (oneStr ++ " " ++ twoStr)
+        (List.concatMap
+            (\(Attribute attrDetails) ->
+                attrDetails
+            )
+            attrList
+        )
 
 
 type alias Attr msg =
@@ -654,31 +628,33 @@ attrIf bool attr =
 attribute : Html.Attribute msg -> Attribute msg
 attribute a =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = [ a ]
-            , class = Nothing
-            , styles = noStyles
-            , nearby = []
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = [ a ]
+                , class = Nothing
+                , styles = noStyles
+                , nearby = []
+                }
+          }
+        ]
 
 
 attributeWith : Flag -> Html.Attribute msg -> Attribute msg
 attributeWith flag a =
     Attribute
-        { flag = flag
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = [ a ]
-            , class = Nothing
-            , styles = noStyles
-            , nearby = []
-            }
-        }
+        [ { flag = flag
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = [ a ]
+                , class = Nothing
+                , styles = noStyles
+                , nearby = []
+                }
+          }
+        ]
 
 
 onPress :
@@ -686,18 +662,19 @@ onPress :
     -> Attribute msg
 onPress msg =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsButton
-            , additionalInheritance = BitField.none
-            , attrs =
-                [ Events.onClick msg
-                ]
-            , class = Just Style.classes.cursorPointer
-            , styles = noStyles
-            , nearby = []
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsButton
+                , additionalInheritance = BitField.none
+                , attrs =
+                    [ Events.onClick msg
+                    ]
+                , class = Just Style.classes.cursorPointer
+                , styles = noStyles
+                , nearby = []
+                }
+          }
+        ]
 
 
 onKey :
@@ -719,27 +696,28 @@ onKey details =
                 |> Json.andThen decode
     in
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs =
-                [ Events.preventDefaultOn "keyup"
-                    (Json.map
-                        (\fired ->
-                            ( fired
-                            , True
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs =
+                    [ Events.preventDefaultOn "keyup"
+                        (Json.map
+                            (\fired ->
+                                ( fired
+                                , True
+                                )
                             )
+                            isKey
                         )
-                        isKey
-                    )
-                , Attr.tabindex 0
-                ]
-            , class = Nothing
-            , styles = noStyles
-            , nearby = []
-            }
-        }
+                    , Attr.tabindex 0
+                    ]
+                , class = Nothing
+                , styles = noStyles
+                , nearby = []
+                }
+          }
+        ]
 
 
 link :
@@ -750,100 +728,105 @@ link :
     -> Attribute msg
 link details =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsLink
-            , additionalInheritance = BitField.none
-            , attrs =
-                [ Attr.href details.url
-                , case details.download of
-                    Nothing ->
-                        Attr.rel "noopener noreferrer"
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsLink
+                , additionalInheritance = BitField.none
+                , attrs =
+                    [ Attr.href details.url
+                    , case details.download of
+                        Nothing ->
+                            Attr.rel "noopener noreferrer"
 
-                    Just _ ->
-                        Attr.class ""
-                , case details.download of
-                    Nothing ->
-                        if details.newTab then
-                            Attr.target "_blank"
-
-                        else
+                        Just _ ->
                             Attr.class ""
+                    , case details.download of
+                        Nothing ->
+                            if details.newTab then
+                                Attr.target "_blank"
 
-                    Just downloadName ->
-                        Attr.download downloadName
-                ]
-            , class = Nothing
-            , styles = noStyles
-            , nearby = []
-            }
-        }
+                            else
+                                Attr.class ""
+
+                        Just downloadName ->
+                            Attr.download downloadName
+                    ]
+                , class = Nothing
+                , styles = noStyles
+                , nearby = []
+                }
+          }
+        ]
 
 
 nodeAs : Node -> Attribute msg
 nodeAs node =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = node
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Nothing
-            , styles = noStyles
-            , nearby = []
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = node
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Nothing
+                , styles = noStyles
+                , nearby = []
+                }
+          }
+        ]
 
 
 styleList : List ( String, String ) -> Attribute msg
 styleList props =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Nothing
-            , styles =
-                \_ _ ->
-                    props
-            , nearby = []
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Nothing
+                , styles =
+                    \_ _ ->
+                        props
+                , nearby = []
+                }
+          }
+        ]
 
 
 style : String -> String -> Attribute msg
 style name val =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Nothing
-            , styles =
-                \_ _ ->
-                    [ ( name, val ) ]
-            , nearby = []
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Nothing
+                , styles =
+                    \_ _ ->
+                        [ ( name, val ) ]
+                , nearby = []
+                }
+          }
+        ]
 
 
 styleDynamic : String -> (Inheritance.Encoded -> String) -> Attribute msg
 styleDynamic name toVal =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Nothing
-            , styles =
-                \inheritance _ ->
-                    [ ( name, toVal inheritance ) ]
-            , nearby = []
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Nothing
+                , styles =
+                    \inheritance _ ->
+                        [ ( name, toVal inheritance ) ]
+                , nearby = []
+                }
+          }
+        ]
 
 
 style2 :
@@ -854,20 +837,21 @@ style2 :
     -> Attribute msg
 style2 oneName oneVal twoName twoVal =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Nothing
-            , styles =
-                \_ _ ->
-                    [ ( oneName, oneVal )
-                    , ( twoName, twoVal )
-                    ]
-            , nearby = []
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Nothing
+                , styles =
+                    \_ _ ->
+                        [ ( oneName, oneVal )
+                        , ( twoName, twoVal )
+                        ]
+                , nearby = []
+                }
+          }
+        ]
 
 
 style3 :
@@ -880,38 +864,40 @@ style3 :
     -> Attribute msg
 style3 oneName oneVal twoName twoVal threeName threeVal =
     Attribute
-        { flag = Flag.skip
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Nothing
-            , styles =
-                \_ _ ->
-                    [ ( oneName, oneVal )
-                    , ( twoName, twoVal )
-                    , ( threeName, threeVal )
-                    ]
-            , nearby = []
-            }
-        }
+        [ { flag = Flag.skip
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Nothing
+                , styles =
+                    \_ _ ->
+                        [ ( oneName, oneVal )
+                        , ( twoName, twoVal )
+                        , ( threeName, threeVal )
+                        ]
+                , nearby = []
+                }
+          }
+        ]
 
 
 styleWith : Flag -> String -> String -> Attribute msg
 styleWith flag name val =
     Attribute
-        { flag = flag
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Nothing
-            , styles =
-                \_ _ ->
-                    [ ( name, val ) ]
-            , nearby = []
-            }
-        }
+        [ { flag = flag
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Nothing
+                , styles =
+                    \_ _ ->
+                        [ ( name, val ) ]
+                , nearby = []
+                }
+          }
+        ]
 
 
 styleAndClass :
@@ -924,18 +910,19 @@ styleAndClass :
     -> Attribute msg
 styleAndClass flag v =
     Attribute
-        { flag = flag
-        , attr =
-            { node = NodeAsDiv
-            , additionalInheritance = BitField.none
-            , attrs = []
-            , class = Just v.class
-            , styles =
-                \_ _ ->
-                    [ ( v.styleName, v.styleVal ) ]
-            , nearby = []
-            }
-        }
+        [ { flag = flag
+          , attr =
+                { node = NodeAsDiv
+                , additionalInheritance = BitField.none
+                , attrs = []
+                , class = Just v.class
+                , styles =
+                    \_ _ ->
+                        [ ( v.styleName, v.styleVal ) ]
+                , nearby = []
+                }
+          }
+        ]
 
 
 type alias Edges =
@@ -1106,6 +1093,9 @@ element node layout attrList children =
     Element
         (\parentBits ->
             let
+                flattened =
+                    flatten attrList []
+
                 myBaseBits =
                     Inheritance.clearParentValues parentBits
                         |> (case layout of
@@ -1126,7 +1116,7 @@ element node layout attrList children =
                            )
 
                 ( analyzedBits, myBits, iHave ) =
-                    analyze Flag.none BitField.init myBaseBits attrList
+                    analyze Flag.none BitField.init myBaseBits flattened
 
                 htmlAttrs =
                     if BitField.has Inheritance.isTextLayout parentBits && BitField.has Flag.xAlign iHave then
@@ -1146,10 +1136,10 @@ element node layout attrList children =
                                         ++ "px"
                                     )
                         in
-                        toAttrs parentBits myBits Flag.none [ margin ] attrList
+                        toAttrs parentBits myBits Flag.none [ margin ] flattened
 
                     else
-                        toAttrs parentBits myBits Flag.none [] attrList
+                        toAttrs parentBits myBits Flag.none [] flattened
 
                 styleAttrs =
                     if BitField.has AnalyzeBits.cssVars analyzedBits then
@@ -1160,7 +1150,7 @@ element node layout attrList children =
                             (contextClasses layout)
                             htmlAttrs
                             ""
-                            (List.reverse attrList)
+                            flattened
 
                     else
                         toStyle parentBits
@@ -1169,10 +1159,10 @@ element node layout attrList children =
                             Flag.none
                             htmlAttrs
                             (contextClasses layout)
-                            (List.reverse attrList)
+                            flattened
 
                 finalChildren =
-                    toChildren myBits analyzedBits attrList children
+                    toChildren myBits analyzedBits flattened children
             in
             if node == NodeAsImage then
                 Html.img styleAttrs finalChildren
@@ -1286,7 +1276,7 @@ element node layout attrList children =
 toChildren :
     Inheritance.Encoded
     -> AnalyzeBits.Encoded
-    -> List (Attribute msg)
+    -> List (FlaggedAttr msg)
     -> List (Element msg)
     -> List (Html.Html msg)
 toChildren myBits analyzedBits attrList children =
@@ -1314,6 +1304,9 @@ elementKeyed node layout attrList children =
     Element
         (\parentBits ->
             let
+                flattened =
+                    flatten attrList []
+
                 myBaseBits =
                     Inheritance.clearParentValues parentBits
                         |> (case layout of
@@ -1334,7 +1327,7 @@ elementKeyed node layout attrList children =
                            )
 
                 ( analyzedBits, myBits, iHave ) =
-                    analyze Flag.none BitField.init myBaseBits attrList
+                    analyze Flag.none BitField.init myBaseBits flattened
 
                 htmlAttrs =
                     if BitField.has Inheritance.isTextLayout parentBits && BitField.has Flag.xAlign iHave then
@@ -1354,20 +1347,20 @@ elementKeyed node layout attrList children =
                                         ++ "px"
                                     )
                         in
-                        toAttrs parentBits myBits Flag.none [ margin ] attrList
+                        toAttrs parentBits myBits Flag.none [ margin ] flattened
 
                     else
-                        toAttrs parentBits myBits Flag.none [] attrList
+                        toAttrs parentBits myBits Flag.none [] flattened
 
                 styleAttrs =
                     if BitField.has AnalyzeBits.cssVars analyzedBits then
-                        toStyleAsEncodedProperty parentBits myBits analyzedBits Flag.none (contextClasses layout) htmlAttrs "" (List.reverse attrList)
+                        toStyleAsEncodedProperty parentBits myBits analyzedBits Flag.none (contextClasses layout) htmlAttrs "" flattened
 
                     else
-                        toStyle parentBits myBits analyzedBits Flag.none htmlAttrs (contextClasses layout) (List.reverse attrList)
+                        toStyle parentBits myBits analyzedBits Flag.none htmlAttrs (contextClasses layout) flattened
 
                 finalChildren =
-                    toChildrenKeyed myBits analyzedBits attrList children
+                    toChildrenKeyed myBits analyzedBits flattened children
             in
             if BitField.has AnalyzeBits.isLink analyzedBits then
                 Html.Keyed.node "a" styleAttrs finalChildren
@@ -1478,7 +1471,7 @@ elementKeyed node layout attrList children =
 toChildrenKeyed :
     Inheritance.Encoded
     -> AnalyzeBits.Encoded
-    -> List (Attribute msg)
+    -> List (FlaggedAttr msg)
     -> List ( String, Element msg )
     -> List ( String, Html.Html msg )
 toChildrenKeyed myBits analyzedBits attrList children =
@@ -1505,13 +1498,55 @@ fontSizeAdjusted size height =
     toFloat size * (1 / height)
 
 
-isSkippable : Flag -> Bool
-isSkippable bits =
+shouldAlwaysRender : Flag -> Bool
+shouldAlwaysRender bits =
     -- We skip padding here as well because
     --  1. it's supposed to accumulate, e.g. you set padding-left/padding-right and they should stack
     --  2. But we can't use `skip` because we want to identify stuff by flag
     --      to pull it out to use in multiline inputs.  See Ui.Input.multiline
     BitField.fieldEqual bits Flag.skip || BitField.fieldEqual bits Flag.padding
+
+
+{-| This flattens and reverses the list
+
+    [ one, two, [ three, four ], five ]
+
+Will turn into
+
+    [ five
+    , four
+    , three
+    , two
+    , one
+    ]
+
+-}
+flatten :
+    List (Attribute msg)
+    -> List (FlaggedAttr msg)
+    -> List (FlaggedAttr msg)
+flatten attrList gathered =
+    case attrList of
+        [] ->
+            gathered
+
+        (Attribute []) :: remain ->
+            flatten remain gathered
+
+        (Attribute [ attr ]) :: remain ->
+            flatten remain (attr :: gathered)
+
+        (Attribute attrDetailsList) :: remain ->
+            let
+                newGathered =
+                    List.foldl
+                        (\attr innerGathered ->
+                            attr :: innerGathered
+                        )
+                        gathered
+                        attrDetailsList
+            in
+            flatten remain newGathered
 
 
 {-|
@@ -1525,7 +1560,7 @@ analyze :
     Flag.Field
     -> AnalyzeBits.Encoded
     -> Inheritance.Encoded
-    -> List (Attribute msg)
+    -> List (FlaggedAttr msg)
     -> ( AnalyzeBits.Encoded, Inheritance.Encoded, Flag.Field )
 analyze has encoded inheritance attrList =
     case attrList of
@@ -1541,14 +1576,14 @@ analyze has encoded inheritance attrList =
             , has
             )
 
-        (Attribute { flag, attr }) :: remain ->
+        { flag, attr } :: remain ->
             let
                 previouslyRendered =
                     -- We skip padding here as well because
                     --  1. it's supposed to accumulate, e.g. you set padding-left/padding-right and they should stack
                     --  2. But we can't use `skip` because we want to identify stuff by flag
                     --      to pull it out to use in multiline inputs.  See Ui.Input.multiline
-                    if isSkippable flag then
+                    if shouldAlwaysRender flag then
                         False
 
                     else
@@ -1579,17 +1614,17 @@ toAttrs :
     -> Inheritance.Encoded
     -> Flag.Field
     -> List (VirtualDom.Attribute msg)
-    -> List (Attribute msg)
+    -> List (FlaggedAttr msg)
     -> List (Html.Attribute msg)
 toAttrs parentBits myBits has htmlAttrs attrList =
     case attrList of
         [] ->
             htmlAttrs
 
-        (Attribute { flag, attr }) :: remain ->
+        { flag, attr } :: remain ->
             let
                 previouslyRendered =
-                    if isSkippable flag then
+                    if shouldAlwaysRender flag then
                         False
 
                     else
@@ -1625,14 +1660,14 @@ toAttrs parentBits myBits has htmlAttrs attrList =
 toBehindElements :
     Inheritance.Encoded
     -> List (Html.Html msg)
-    -> List (Attribute msg)
+    -> List (FlaggedAttr msg)
     -> List (Html.Html msg)
 toBehindElements inheritance foundElems attrList =
     case attrList of
         [] ->
             foundElems
 
-        (Attribute { attr }) :: remain ->
+        { attr } :: remain ->
             case attr.nearby of
                 [] ->
                     toBehindElements inheritance foundElems remain
@@ -1665,14 +1700,14 @@ toBehindElements inheritance foundElems attrList =
 toNearbyElements :
     Inheritance.Encoded
     -> List (Html.Html msg)
-    -> List (Attribute msg)
+    -> List (FlaggedAttr msg)
     -> List (Html.Html msg)
 toNearbyElements inheritance foundElems attrList =
     case attrList of
         [] ->
             foundElems
 
-        (Attribute { attr }) :: remain ->
+        { attr } :: remain ->
             case attr.nearby of
                 [] ->
                     toNearbyElements inheritance foundElems remain
@@ -1709,7 +1744,7 @@ toStyle :
     -> Flag.Field
     -> List (VirtualDom.Attribute msg)
     -> String
-    -> List (Attribute msg)
+    -> List (FlaggedAttr msg)
     -> List (Html.Attribute msg)
 toStyle parentBits myBits analyzedBits has htmlAttrs classes attrList =
     case attrList of
@@ -1720,10 +1755,10 @@ toStyle parentBits myBits analyzedBits has htmlAttrs classes attrList =
             else
                 Attr.class classes :: htmlAttrs
 
-        (Attribute { flag, attr }) :: remain ->
+        { flag, attr } :: remain ->
             let
                 previouslyRendered =
-                    if isSkippable flag then
+                    if shouldAlwaysRender flag then
                         False
 
                     else
@@ -1775,7 +1810,7 @@ toStyleAsEncodedProperty :
     -> String
     -> List (VirtualDom.Attribute msg)
     -> String
-    -> List (Attribute msg)
+    -> List (FlaggedAttr msg)
     -> List (Html.Attribute msg)
 toStyleAsEncodedProperty parentBits myBits analyzed has classesString htmlAttrs str attrList =
     case attrList of
@@ -1790,10 +1825,10 @@ toStyleAsEncodedProperty parentBits myBits analyzed has classesString htmlAttrs 
                     (Encode.string str)
                 :: htmlAttrs
 
-        (Attribute { flag, attr }) :: remain ->
+        { flag, attr } :: remain ->
             let
                 previouslyRendered =
-                    if isSkippable flag then
+                    if shouldAlwaysRender flag then
                         False
 
                     else
