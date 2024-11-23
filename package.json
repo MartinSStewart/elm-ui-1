@@ -15,7 +15,8 @@
     "stylesheet": "node stylesheets/build.js",
     "docs": "elm make --docs docs.json",
     "watch-stylesheet": "node stylesheets/build.js --watch",
-    "review": "elm-review"
+    "review": "elm-review src/Internal/Model2.elm",
+    "render-test": "bash tests-rendering/render.sh"
   },
   "repository": {
     "type": "git",
@@ -38,6 +39,7 @@
   "devDependencies": {
     "@kachkaev/run-elm": "^3.0.0-beta.1",
     "chokidar": "^3.4.2",
-    "elm-review": "^2.10.3"
+    "elm-review": "^2.10.3",
+    "puppeteer": "^22.13.1"
   }
 }
