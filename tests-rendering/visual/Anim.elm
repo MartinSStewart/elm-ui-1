@@ -48,7 +48,7 @@ init () =
 
 
 type Msg
-    = Ui Ui.Anim.Msg
+    = Ui Ui.Msg
     | Clicked
     | ShowClicked
 
@@ -89,12 +89,13 @@ breakpoints =
 
 
 view model =
-    Ui.Anim.layout
-        { options = []
-        , toMsg = Ui
-        , breakpoints = Just breakpoints
-        }
-        model.ui
+    Ui.layout
+        (Ui.default
+            |> Ui.withAnimation
+                { toMsg = Ui
+                , state = model.ui
+                }
+        )
         [ Ui.Font.font
             { name = "EB Garamond"
             , fallback = [ Ui.Font.serif ]
@@ -199,15 +200,19 @@ view model =
                         ]
                     ]
                 ]
-            , Theme.h1 "Intro animation"
+            , Theme.h1 "Intro animation (on click)"
             , Ui.row
                 [ Ui.spacing 20
                 , Ui.Events.onClick ShowClicked
                 ]
                 [ box
-                    [ Ui.Anim.hovered (Ui.Anim.ms 200)
-                        [ Ui.Anim.borderColor Theme.pink
-                        ]
+                    [ Ui.Anim.intro (Ui.Anim.ms 2000)
+                        { start =
+                            []
+                        , to =
+                            [ Ui.Anim.borderColor Theme.pink
+                            ]
+                        }
                     ]
                 , if model.show then
                     box
@@ -334,7 +339,7 @@ view model =
                         [ Ui.Anim.rotation 1
                             |> Ui.Anim.withTransition
                                 (Ui.Anim.spring
-                                    { wobble = 1
+                                    { wobble = 0.2
                                     , quickness = 0
                                     }
                                 )

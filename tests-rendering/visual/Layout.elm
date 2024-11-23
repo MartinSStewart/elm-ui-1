@@ -11,7 +11,8 @@ import Ui.Prose
 
 main : Html msg
 main =
-    Ui.layout []
+    Ui.layout Ui.default
+        []
         (Ui.column
             [ Ui.width (Ui.px 800)
             , Ui.centerX
@@ -40,6 +41,7 @@ main =
                 (List.repeat 100 smallBox)
             , centered
             , nearby
+            , scrollable
             ]
         )
 
@@ -309,6 +311,53 @@ nearby =
                     (tinybox [ Ui.alignRight, Ui.alignBottom ])
                 ]
             ]
+        ]
+
+
+scrollable =
+    Ui.column [ Ui.spacing 20 ]
+        [ Ui.text "Scrollable"
+        , Ui.column [ Ui.spacing 20, Ui.height (Ui.px 400), Ui.scrollable ]
+            [ Ui.el
+                [ Ui.height (Ui.px 800)
+                , Theme.palette.pink
+                ]
+                (Ui.text "Scrollable container!")
+            , box []
+            ]
+        , Ui.text "Scrollable top (The top is scrollable, but the box below isnt)"
+        , Ui.column [ Ui.spacing 20, Ui.height (Ui.px 400) ]
+            [ Ui.el [ Ui.scrollable, Ui.height Ui.fill ] <|
+                Ui.el
+                    [ Ui.height (Ui.px 800)
+                    , Theme.palette.pink
+                    ]
+                    (Ui.text "Scrollable container!")
+            , box []
+            ]
+        , Ui.text "Nearly the same as above, but scrollable part is content based"
+        , Ui.column [ Ui.spacing 20, Ui.height (Ui.px 400) ]
+            [ Ui.el [ Ui.scrollable, Ui.height Ui.fill ] <|
+                Ui.el
+                    [ Theme.palette.pink
+                    ]
+                    (Ui.text (String.repeat 100 "Scrollable container! "))
+            , box []
+            ]
+        , Ui.text "Nearly the same as above, but scrollable part is content based"
+        , Ui.el
+            [ Ui.height (Ui.px 800)
+            , Theme.rulerRight 800
+            ]
+          <|
+            Ui.column [ Ui.spacing 20, Ui.height Ui.fill ]
+                [ Ui.el [ Ui.scrollable, Ui.height Ui.fill ] <|
+                    Ui.el
+                        [ Theme.palette.pink
+                        ]
+                        (Ui.text (String.repeat 200 "Scrollable container! "))
+                , box []
+                ]
         ]
 
 
