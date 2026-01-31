@@ -133,7 +133,7 @@ Here are some alternatives to think about that don't involve explicitly disablin
 
 **Disabled Buttons** - Change the `Msg` it fires, the text that is rendered, and optionally set a `Region.description` which will be available to screen readers.
 
-    import Ui.Input as Input
+    import Ui.Input
     import Ui.Region as Region
 
     myButton ready =
@@ -554,9 +554,11 @@ viewSlider attributes input direction =
                 Vertical ->
                     True
 
+        value =
+            clamp input.min input.max input.value
+
         factor =
-            (input.value - input.min)
-                / (input.max - input.min)
+            (value - input.min) / (input.max - input.min)
     in
     Ui.el
         ([ Ui.behindContent
@@ -613,7 +615,7 @@ viewSlider attributes input direction =
                     )
                 , Html.Attributes.min (String.fromFloat input.min)
                 , Html.Attributes.max (String.fromFloat input.max)
-                , Html.Attributes.value (String.fromFloat input.value)
+                , Html.Attributes.value (String.fromFloat value)
                 ]
                 []
         )
